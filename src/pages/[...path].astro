@@ -1,0 +1,90 @@
+---
+export async function getStaticPaths() {
+  const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://macho-newsletter.localsite.io/?rest_route=';
+  
+  try {
+    const basicAuth = btoa('journey:robust');
+    // _embed tells WordPress to attach categories and taxonomy metadata directly to the JSON response
+    const res = await fetch(`${apiUrl}/wp/v2/symptoms&per_page=100&_embed`, {
+      headers: {
+        'Authorization': `Basic ${basicAuth}`
+      }
+    });
+    
+    const posts = await res.json();
+    if (Array.isArray(posts)) {
+      return posts.map((post) => {
+        let brandSlug = '';
+        let modelSlug = '';
+        
+        // Grab the embedded term data safely
+        const terms = post._embedded?.['wp:term']?.[0] || [];
+        
+        // Find the child category (bike model) and parent category (bike brand)
+        const childCat = terms.find(term => term.parent !== 0);
+        const parentCat = terms.find(term => term.parent === 0);
+        
+        if (childCat && parentCat) {
+          // If both exist -> /brand/model/symptom-slug
+          brandSlug = parentCat.slug;
+          modelSlug = childCat.slug;
+        } else if (parentCat) {
+          // If only brand exists -> /brand/all/symptom-slug
+          brandSlug = parentCat.slug;
+          modelSlug = 'all';
+        }
+        
+        // Build the nested url path. If no category exists, it falls back to root /symptom-slug
+        const finalPath = brandSlug ? `${brandSlug}/${modelSlug}/${post.slug}` : post.slug;
+        
+        return {
+          params: { path: finalPath },
+          props: { post },
+        };
+      });
+    }
+  } catch (error) {
+    console.error("Failed to compile nested directory paths:", error);
+  }
+
+  return [];
+}
+
+const { post } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{post?.title?.rendered || 'Loading...'}</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            color: #111;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .content {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    {post ? (
+      <a href="/">← Back to Home</a>
+      <h1>{post.title.rendered}</h1>
+      <div class="content" set:html={post.content.rendered} />
+    ) : (
+      <h1>Post compilation error</h1>
+    )}
+</body>
+</html>

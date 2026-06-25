@@ -1,91 +1,52 @@
 ---
-const apiUrl = "https://macho-newsletter.localsite.io/wp-json/wp/v2";
-const username = "journey";
-const password = "robust";
-const token = btoa(`${username}:${password}`);
+// Fetching the posts on the homepage with _embed so links can read the categories
+const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://macho-newsletter.localsite.io/?rest_route=';
+const basicAuth = btoa('journey:robust');
 
-let symptoms = [];
-let errorMsg = null;
-
+let posts = [];
 try {
-	const response = await fetch(`${apiUrl}/symptoms?per_page=100`, {
-		headers: { 'Authorization': `Basic ${token}` },
-		signal: AbortSignal.timeout(8000)
-	});
-	
-	if (!response.ok) throw new Error(`WordPress returned status ${response.status}`);
-	symptoms = await response.json();
-	if (!Array.isArray(symptoms)) symptoms = [];
-} catch (error) {
-	errorMsg = error.message;
+  const res = await fetch(`${apiUrl}/wp/v2/symptoms&per_page=100&_embed`, {
+    headers: { 'Authorization': `Basic ${basicAuth}` }
+  });
+  posts = await res.json();
+} catch (e) {
+  console.error("Home page fetch failed", e);
 }
 ---
 
+<!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<title>Bike Fix Directory - Symptoms Guide</title>
-		<style>
-			body { 
-				font-family: system-ui, -apple-system, sans-serif; 
-				max-width: 800px; 
-				margin: 40px auto; 
-				padding: 20px; 
-				color: #222;
-				background-color: #f9f9f9;
-			}
-			h1 { color: #111; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
-			.symptom-list { list-style: none; padding: 0; }
-			.symptom-item { 
-				background: white; 
-				margin: 10px 0; 
-				padding: 15px; 
-				border-radius: 6px; 
-				box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-			}
-			.symptom-item a { 
-				color: #0066cc; 
-				text-decoration: none; 
-				font-weight: 600; 
-				font-size: 1.1rem;
-			}
-			.symptom-item a:hover { text-decoration: underline; }
-			.notice { 
-				background: #fff3cd; 
-				color: #856404; 
-				padding: 15px; 
-				border-radius: 4px; 
-				margin-bottom: 20px; 
-			}
-		</style>
-	</head>
-	<body>
-		<header>
-			<h1>🚲 Bike Fix Diagnostic Center</h1>
-			<p>Select your bike's symptom below to view troubleshooting guides.</p>
-		</header>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bike Fix Directory</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        ul { padding: 0; list-style: none; }
+        li { margin: 15px 0; }
+        a { color: #0066cc; text-decoration: none; font-size: 1.2rem; font-weight: bold; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>Symptoms Directory</h1>
+    <ul>
+        {Array.isArray(posts) && posts.map((post) => {
+            const terms = post._embedded?.['wp:term']?.[0] || [];
+            const childCat = terms.find(term => term.parent !== 0);
+            const parentCat = terms.find(term => term.parent === 0);
+            
+            // Build matching link paths dynamically
+            const hrefPath = parentCat 
+                ? `/${parentCat.slug}/${childCat ? childCat.slug : 'all'}/${post.slug}` 
+                : `/${post.slug}`;
 
-		<main>
-			{errorMsg && (
-				<div class="notice">
-					<strong>Sync Status:</strong> Unable to connect to your live LocalWP instance. Error: {errorMsg}. Ensure your laptop is awake and Live Links is active.
-				</div>
-			)}
-
-			{symptoms.length === 0 && !errorMsg && (
-				<p>No symptoms found. Add some inside your custom post type dashboard!</p>
-			)}
-
-			<ul class="symptom-list">
-				{symptoms.map((symptom) => (
-					<li class="symptom-item">
-						<a href={`/symptoms/${symptom.slug}/`}>
-							{symptom.title.rendered} &rarr;
-						</a>
-					</li>
-				))}
-			</ul>
-		</main>
-	</body>
+            return (
+                <li>
+                    <a href={hrefPath}>{post.title.rendered}</a>
+                </li>
+            );
+        })}
+    </ul>
+</body>
 </html>
