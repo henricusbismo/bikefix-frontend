@@ -5,14 +5,14 @@ export async function getStaticPaths() {
   
   try {
     const res = await fetch(`${apiUrl}/wp/v2/symptoms&per_page=100&_embed`, {
-      headers: {
-        'Authorization': `Basic ${basicAuthToken}`
-      }
+      headers: { 'Authorization': `Basic ${basicAuthToken}` }
     });
     
     const posts = await res.json();
     if (Array.isArray(posts)) {
       return posts.map((post) => {
+        if (!post) return null;
+
         let brandSlug = '';
         let modelSlug = '';
         
@@ -20,13 +20,13 @@ export async function getStaticPaths() {
         embeddedTerms.forEach((taxonomyGroup) => {
           if (Array.isArray(taxonomyGroup)) {
             taxonomyGroup.forEach((term) => {
-              if (term.taxonomy === 'brands') brandSlug = term.slug;
-              if (term.taxonomy === 'models') modelSlug = term.slug;
+              if (term && term.taxonomy === 'brands') brandSlug = term.slug || '';
+              if (term && term.taxonomy === 'models') modelSlug = term.slug || '';
             });
           }
         });
         
-        let finalPath = post.slug;
+        let finalPath = post.slug || '';
         if (brandSlug && modelSlug) {
           finalPath = `${brandSlug}/${modelSlug}/${post.slug}`;
         } else if (brandSlug) {
@@ -37,7 +37,7 @@ export async function getStaticPaths() {
           params: { path: finalPath },
           props: { post },
         };
-      });
+      }).filter(Boolean);
     }
   } catch (error) {
     console.error("Failed to compile custom taxonomy paths:", error);
@@ -47,6 +47,14 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return 'Updated recently';
+  const date = new Date(dateStr);
+  return `Updated ${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+};
+
+const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
 ---
 
 <!DOCTYPE html>
@@ -54,20 +62,200 @@ const { post } = Astro.props;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{post?.title?.rendered || 'Loading...'}</title>
+    <title>{post?.title?.rendered ? post.title.rendered.replace(/&#8217;/g, "'") : 'Review'} - Bike Fix Database</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 24px; line-height: 1.6; color: #333; }
-        h1 { color: #111; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .content { margin-top: 20px; }
+        /* Shared Shell Structure from Landing Page */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            max-width: 1140px; 
+            margin: 0 auto; 
+            padding: 0 24px; 
+            color: #000000;
+            background-color: #ffffff;
+            -webkit-font-smoothing: antialiased;
+        }
+        .site-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 0 16px 0;
+            gap: 32px;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #000000;
+        }
+        .logo-t { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 900; margin-right: 8px; line-height: 1; }
+        .logo-divider { width: 1px; height: 22px; background-color: #cccccc; margin-right: 8px; }
+        .logo-text { font-family: 'Playfair Display', serif; font-size: 1.75rem; font-weight: 900; letter-spacing: -0.8px; line-height: 1; }
+        
+        .search-container { flex-grow: 1; max-width: 580px; position: relative; display: flex; align-items: center; }
+        .search-input { width: 100%; height: 40px; padding: 0 16px 0 165px; font-size: 0.92rem; border: 1px solid #000000; border-radius: 20px; font-family: 'Inter', sans-serif; outline: none; box-sizing: border-box; color: #000000; }
+        .search-input::placeholder { color: #999999; font-size: 0.92rem; }
+        .search-badge { position: absolute; left: 14px; display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.88rem; color: #000000; pointer-events: none; white-space: nowrap; }
+        .search-badge .star-icon { color: #4f46e5; font-size: 1.2rem; line-height: 1; }
+        
+        .auth-actions { display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+        .btn-signup { font-size: 0.88rem; font-weight: 600; color: #000000; text-decoration: none; }
+        .btn-login { font-size: 0.88rem; font-weight: 700; background: #000000; color: #ffffff; padding: 8px 16px; border-radius: 4px; text-decoration: none; }
+        
+        .nav-menu { display: flex; justify-content: space-between; padding: 12px 0 24px 0; overflow-x: auto; gap: 16px; scrollbar-width: none; }
+        .nav-menu::-webkit-scrollbar { display: none; }
+        .nav-link { font-size: 0.95rem; font-weight: 700; color: #000000; text-decoration: none; white-space: nowrap; }
+        .nav-link:hover { color: #0066cc; }
+        
+        .disclaimer-section { background-color: #f9f9f9; padding: 14px 0; text-align: center; }
+        .disclaimer-text { font-size: 0.85rem; color: #333333; margin: 0; line-height: 1.4; }
+        .disclaimer-text strong { color: #000000; text-decoration: underline; }
+        .header-bottom-line { border: none; border-top: 1.5px solid #000000; margin: 16px 0 40px 0; padding: 0; }
+
+        /* Dedicated Article Content Layout Matrix */
+        .article-container {
+            max-width: 650px;
+            margin: 0 auto 80px auto;
+        }
+        .back-link {
+            display: inline-block;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #666666;
+            text-decoration: none;
+            margin-bottom: 24px;
+        }
+        .back-link:hover { color: #0066cc; text-decoration: underline; }
+        
+        .article-header-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.15;
+            color: #000000;
+            margin: 0 0 16px 0;
+        }
+        .article-meta-row {
+            font-size: 0.85rem;
+            color: #666666;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+        .article-featured-media {
+            width: 100%;
+            height: auto;
+            max-height: 420px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 35px;
+        }
+        .article-body-content {
+            font-size: 1.125rem;
+            color: #222222;
+            line-height: 1.65;
+        }
+        .article-body-content p { margin: 0 0 24px 0; }
+        .article-body-content h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #000000;
+            margin: 40px 0 16px 0;
+        }
+        .article-body-content h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #000000;
+            margin: 32px 0 12px 0;
+        }
+        .article-body-content ul, .article-body-content ol { margin: 0 0 24px 0; padding-left: 24px; }
+        .article-body-content li { margin-bottom: 8px; }
+
+        @media (max-width: 768px) {
+            .site-header { flex-direction: column; align-items: stretch; gap: 16px; }
+            .search-container { max-width: 100%; }
+            .search-input { padding-left: 155px; }
+            .auth-actions { justify-content: space-between; }
+            .nav-menu { justify-content: flex-start; }
+            .article-header-title { font-size: 2rem; }
+        }
     </style>
 </head>
 <body>
-    {post ? (
-      <a href="/">← Back to Home</a>
-      <h1>{post.title.rendered}</h1>
-      <div class="content" set:html={post.content.rendered} />
-    ) : (
-      <h1>Post compilation error</h1>
-    )}
+
+    <!-- Unified Shell Identity Elements -->
+    <header class="site-header">
+        <a href="/" class="logo-container">
+            <span class="logo-t">B</span>
+            <div class="logo-divider"></div>
+            <span class="logo-text">Bikefixdb</span>
+        </a>
+        
+        <div class="search-container">
+            <div class="search-badge">
+                <span class="star-icon">✦</span> Ask Bikefix Database
+            </div>
+            <!-- Standard dynamic input fallback redirecting interaction back to home list search -->
+            <input 
+                type="text" 
+                class="search-input" 
+                placeholder="I broke my chain" 
+                onfocus="window.location.href='/?focus=search'"
+                readonly
+            />
+        </div>
+
+        <div class="auth-actions">
+            <a href="#" class="btn-signup">Sign up</a>
+            <a href="#" class="btn-login">Log in</a>
+        </div>
+    </header>
+
+    <nav class="nav-menu">
+        <a href="/" class="nav-link">Prime Day</a>
+        <a href="#" class="nav-link">Home & Garden</a>
+        <a href="#" class="nav-link">Kitchen</a>
+        <a href="#" class="nav-link">Health & Lifestyle</a>
+        <a href="#" class="nav-link">Tech</a>
+        <a href="#" class="nav-link">Baby & Kid</a>
+        <a href="#" class="nav-link">Style</a>
+        <a href="#" class="nav-link">Gifts</a>
+        <a href="#" class="nav-link">Bikefixdb Store</a>
+    </nav>
+
+    <div class="disclaimer-section">
+        <p class="disclaimer-text">
+            We independently review everything we recommend. When you buy through our links, we may earn a commission. <strong>Learn more ›</strong>
+        </p>
+    </div>
+
+    <hr class="header-bottom-line" />
+
+    <!-- Article Content Layout Container -->
+    <div class="article-container">
+        {post ? (
+            <article>
+                <a href="/" class="back-link">← All Reviews</a>
+                
+                <h1 class="article-header-title" set:html={post.title?.rendered} />
+                <div class="article-meta-row">{formatDate(post.date)}</div>
+                
+                {featuredImage && (
+                    <img src={featuredImage} alt={post.title?.rendered || 'Review Image'} class="article-featured-media" />
+                )}
+                
+                <div class="article-body-content" set:html={post.content?.rendered} />
+            </article>
+        ) : (
+            <div style="padding: 40px 0; text-align: center; font-family: monospace; color: #c53030;">
+                <h3>⚠️ Post Data Structure Failed to Load</h3>
+                <a href="/">Return to Homepage</a>
+            </div>
+        )}
+    </div>
+
 </body>
 </html>
