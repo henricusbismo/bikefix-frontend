@@ -1,40 +1,25 @@
 ---
 export async function getStaticPaths() {
-  const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://macho-newsletter.localsite.io/?rest_route=';
+  const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://journey:robust@macho-newsletter.localsite.io/?rest_route=';
   
   try {
-    const basicAuth = btoa('journey:robust');
-    const res = await fetch(`${apiUrl}/wp/v2/symptoms&per_page=100&_embed`, {
-      headers: {
-        'Authorization': `Basic ${basicAuth}`
-      }
-    });
-    
+    const res = await fetch(`${apiUrl}/wp/v2/symptoms&per_page=100&_embed`);
     const posts = await res.json();
     if (Array.isArray(posts)) {
       return posts.map((post) => {
         let brandSlug = '';
         let modelSlug = '';
         
-        // Extract embedded taxonomy term layers safely
         const embeddedTerms = post._embedded?.['wp:term'] || [];
-        
-        // Loop over the groups to locate your custom taxonomy items
         embeddedTerms.forEach((taxonomyGroup) => {
           if (Array.isArray(taxonomyGroup)) {
             taxonomyGroup.forEach((term) => {
-              if (term.taxonomy === 'brands') {
-                brandSlug = term.slug;
-              }
-              if (term.taxonomy === 'models') {
-                modelSlug = term.slug;
-              }
+              if (term.taxonomy === 'brands') brandSlug = term.slug;
+              if (term.taxonomy === 'models') modelSlug = term.slug;
             });
           }
         });
         
-        // Construct paths cleanly: brand/model/post-slug -> giant/talon/chain-skipping
-        // Falls back safely if an article is left untagged
         let finalPath = post.slug;
         if (brandSlug && modelSlug) {
           finalPath = `${brandSlug}/${modelSlug}/${post.slug}`;
@@ -65,22 +50,9 @@ const { post } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{post?.title?.rendered || 'Loading...'}</title>
     <style>
-        body {
-            font-family: system-ui, sans-serif;
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 0 20px;
-            line-height: 1.6;
-            color: #333;
-        }
-        h1 {
-            color: #111;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-        .content {
-            margin-top: 20px;
-        }
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 24px; line-height: 1.6; color: #333; }
+        h1 { color: #111; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .content { margin-top: 20px; }
     </style>
 </head>
 <body>

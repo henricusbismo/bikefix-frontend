@@ -1,25 +1,32 @@
 ---
-const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://macho-newsletter.localsite.io/?rest_route=/';
-const basicAuth = btoa('journey:robust');
+const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://journey:robust@macho-newsletter.localsite.io/?rest_route=';
 
-let registeredRoutes = [];
-let connectionStatus = "";
+let posts = [];
+let debugError = null;
 
 try {
-  const res = await fetch(apiUrl, {
-    headers: { 'Authorization': `Basic ${basicAuth}` }
-  });
+  const res = await fetch(`${apiUrl}/wp/v2/symptoms&per_page=100&_embed`);
+  const textData = await res.text();
   
-  connectionStatus = `Connected Successfully (Status: ${res.status})`;
-  const data = await res.json();
-  
-  if (data && data.routes) {
-    // Extract every route registered under wp/v2
-    registeredRoutes = Object.keys(data.routes).filter(route => route.includes('wp/v2'));
+  if (res.status === 200) {
+    const parsed = JSON.parse(textData);
+    if (Array.isArray(parsed)) {
+      posts = parsed;
+    } else {
+      debugError = `Connected, but response was not a structured data array.`;
+    }
+  } else {
+    debugError = `Server returned status code: ${res.status}. Double check your LocalWP Live Link app toggle.`;
   }
 } catch (e) {
-  connectionStatus = `Connection Failed: ${e.message}`;
+  debugError = `Failed connecting to open tunnel endpoint: ${e.message}`;
 }
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return 'Updated recently';
+  const date = new Date(dateStr);
+  return `Updated ${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+};
 ---
 
 <!DOCTYPE html>
@@ -27,35 +34,189 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WordPress API Route Scanner</title>
+    <title>Bike Fix Directory - All Reviews</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: monospace; padding: 40px; background: #0f172a; color: #e2e8f0; line-height: 1.5; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .status { padding: 15px; background: #1e293b; border-left: 4px solid #10b981; margin-bottom: 20px; border-radius: 4px; }
-        .route-list { background: #1e293b; padding: 20px; border-radius: 4px; border: 1px solid #334155; }
-        .route-item { padding: 6px 0; border-bottom: 1px solid #334155; color: #38bdf8; }
-        .highlight { color: #f59e0b; font-weight: bold; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            max-width: 1140px; 
+            margin: 0 auto; 
+            padding: 0 24px; 
+            color: #000000;
+            background-color: #ffffff;
+            -webkit-font-smoothing: antialiased;
+        }
+        .site-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 0 16px 0;
+            gap: 32px;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #000000;
+        }
+        .logo-t { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 900; margin-right: 8px; line-height: 1; }
+        .logo-divider { width: 1px; height: 22px; background-color: #cccccc; margin-right: 8px; }
+        .logo-text { font-family: 'Playfair Display', serif; font-size: 1.75rem; font-weight: 900; letter-spacing: -0.8px; line-height: 1; }
+        
+        .search-container { flex-grow: 1; max-width: 580px; position: relative; display: flex; align-items: center; }
+        .search-input { width: 100%; height: 40px; padding: 0 16px 0 165px; font-size: 0.92rem; border: 1px solid #000000; border-radius: 20px; font-family: 'Inter', sans-serif; outline: none; box-sizing: border-box; color: #000000; }
+        .search-input::placeholder { color: #999999; font-size: 0.92rem; }
+        .search-badge { position: absolute; left: 14px; display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.88rem; color: #000000; pointer-events: none; white-space: nowrap; }
+        .search-badge .star-icon { color: #4f46e5; font-size: 1.2rem; line-height: 1; }
+        
+        .auth-actions { display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+        .btn-signup { font-size: 0.88rem; font-weight: 600; color: #000000; text-decoration: none; }
+        .btn-login { font-size: 0.88rem; font-weight: 700; background: #000000; color: #ffffff; padding: 8px 16px; border-radius: 4px; text-decoration: none; }
+        
+        .nav-menu { display: flex; justify-content: space-between; padding: 12px 0 24px 0; overflow-x: auto; gap: 16px; scrollbar-width: none; }
+        .nav-menu::-webkit-scrollbar { display: none; }
+        .nav-link { font-size: 0.95rem; font-weight: 700; color: #000000; text-decoration: none; white-space: nowrap; }
+        .nav-link:hover { color: #0066cc; }
+        
+        .disclaimer-section { background-color: #f9f9f9; padding: 14px 0; text-align: center; }
+        .disclaimer-text { font-size: 0.85rem; color: #333333; margin: 0; line-height: 1.4; }
+        .disclaimer-text strong { color: #000000; text-decoration: underline; }
+        .header-bottom-line { border: none; border-top: 1.5px solid #000000; margin: 16px 0 40px 0; padding: 0; }
+        
+        h1.section-title { font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 800; margin-bottom: 40px; }
+        .articles-list { display: flex; flex-direction: column; gap: 35px; }
+        .article-card { display: flex; gap: 30px; align-items: flex-start; padding-bottom: 35px; border-bottom: 1px solid #f0f0f0; }
+        .thumbnail-wrapper { flex-shrink: 0; width: 280px; height: 180px; background-color: #f7f7f7; overflow: hidden; }
+        .thumbnail-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+        .content-block { display: flex; flex-direction: column; gap: 8px; }
+        .article-title { font-size: 1.4rem; font-weight: 700; margin: 0; }
+        .article-title a { color: #000000; text-decoration: none; }
+        .article-title a:hover { color: #0066cc; text-decoration: underline; }
+        .excerpt { font-size: 1rem; color: #4a4a4a; line-height: 1.5; margin: 0; }
+        .updated-date { font-size: 0.85rem; color: #666666; font-weight: 500; margin-top: 4px; }
+        
+        .debug-box { background-color: #fff5f5; border: 2px dashed #e53e3e; padding: 20px; margin: 20px 0; border-radius: 6px; color: #c53030; font-family: monospace; }
+        @media (max-width: 768px) {
+            .site-header { flex-direction: column; align-items: stretch; gap: 16px; }
+            .search-container { max-width: 100%; }
+            .search-input { padding-left: 155px; }
+            .auth-actions { justify-content: space-between; }
+            .nav-menu { justify-content: flex-start; }
+            .article-card { flex-direction: column; gap: 15px; }
+            .thumbnail-wrapper { width: 100%; height: 200px; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>🔍 Live WordPress Route Map Scanner</h2>
-        <div class="status">
-            <strong>Connection Status:</strong> {connectionStatus}
+
+    <header class="site-header">
+        <a href="/" class="logo-container">
+            <span class="logo-t">T</span>
+            <div class="logo-divider"></div>
+            <span class="logo-text">Wirecutter</span>
+        </a>
+        
+        <div class="search-container">
+            <div class="search-badge">
+                <span class="star-icon">✦</span> Ask Wirecutter Finder
+            </div>
+            <input type="text" id="directorySearch" class="search-input" placeholder="Gift ideas for a baby shower" autocomplete="off" />
         </div>
 
-        <h3>Available URL Ends Found under /wp/v2/:</h3>
-        <div class="route-list">
-            {registeredRoutes.length === 0 ? (
-                <p>No routes found. Ensure your custom post types are fully public.</p>
-            ) : (
-                registeredRoutes.map(route => (
-                    <div class="route-item">
-                        {route.includes('symptom') ? <span class="highlight">👉 {route} 👈</span> : route}
-                    </div>
-                ))
-            )}
+        <div class="auth-actions">
+            <a href="#" class="btn-signup">Sign up</a>
+            <a href="#" class="btn-login">Log in</a>
         </div>
+    </header>
+
+    <nav class="nav-menu">
+        <a href="/" class="nav-link">Prime Day</a>
+        <a href="#" class="nav-link">Home & Garden</a>
+        <a href="#" class="nav-link">Kitchen</a>
+        <a href="#" class="nav-link">Health & Lifestyle</a>
+        <a href="#" class="nav-link">Tech</a>
+        <a href="#" class="nav-link">Baby & Kid</a>
+        <a href="#" class="nav-link">Style</a>
+        <a href="#" class="nav-link">Gifts</a>
+        <a href="#" class="nav-link">Wirecutter Store</a>
+    </nav>
+
+    <div class="disclaimer-section">
+        <p class="disclaimer-text">
+            We independently review everything we recommend. When you buy through our links, we may earn a commission. <strong>Learn more ›</strong>
+        </p>
     </div>
+
+    <hr class="header-bottom-line" />
+
+    <h1 class="section-title">All Reviews</h1>
+
+    {debugError && (
+        <div class="debug-box">
+            <h3>⚠️ Tunnel Connectivity Error</h3>
+            <p>{debugError}</p>
+        </div>
+    )}
+
+    <main class="articles-list">
+        {posts.map((post) => {
+            if (!post) return null;
+            let brandSlug = '';
+            let modelSlug = '';
+            
+            const embeddedTerms = post._embedded?.['wp:term'] || [];
+            embeddedTerms.forEach((taxonomyGroup) => {
+              if (Array.isArray(taxonomyGroup)) {
+                taxonomyGroup.forEach((term) => {
+                  if (term && term.taxonomy === 'brands') brandSlug = term.slug || '';
+                  if (term && term.taxonomy === 'models') modelSlug = term.slug || '';
+                });
+              }
+            });
+
+            const hrefPath = brandSlug ? `/${brandSlug}/${modelSlug ? modelSlug : 'all'}/${post.slug || ''}` : `/${post.slug || ''}`;
+            const featuredImage = post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
+            
+            const rawBodyText = post.content?.rendered ? post.content.rendered.replace(/<\/?[^>]+(>|$)/g, "") : "";
+            const rawExcerptText = post.excerpt?.rendered ? post.excerpt.rendered.replace(/<\/?[^>]+(>|$)/g, "") : "";
+            const searchHaystack = `${post.title?.rendered || ''} ${rawBodyText} ${brandSlug} ${modelSlug}`.toLowerCase();
+
+            return (
+                <article class="article-card" data-search-content={searchHaystack}>
+                    <div class="thumbnail-wrapper">
+                        {featuredImage ? <img src={featuredImage} alt={post.title?.rendered} loading="lazy" /> : <div style="width:100%; height:100%; background:#eaeaea; display:flex; align-items:center; justify-content:center; color:#999; font-size:0.9rem;">No Image</div>}
+                    </div>
+                    <div class="content-block">
+                        <h2 class="article-title">
+                            <a href={hrefPath} set:html={post.title?.rendered || 'Untitled Article'} />
+                        </h2>
+                        <div class="excerpt">
+                          <span>{rawExcerptText.trim() !== "" ? rawExcerptText : (rawBodyText.trim() !== "" ? rawBodyText.substring(0, 160) + "..." : "Read breakdown details...")}</span>
+                        </div>
+                        <p class="updated-date">{formatDate(post.date)}</p>
+                    </div>
+                </article>
+            );
+        })}
+    </main>
+
+    <script>
+        const searchInput = document.getElementById('directorySearch');
+        const cards = document.querySelectorAll('.article-card');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const target = e.target as HTMLInputElement;
+                const query = target.value.toLowerCase().trim();
+                cards.forEach(card => {
+                    const htmlCard = card as HTMLElement;
+                    const content = htmlCard.getAttribute('data-search-content') || '';
+                    htmlCard.style.display = content.includes(query) ? 'flex' : 'none';
+                });
+            });
+        }
+    </script>
 </body>
 </html>
