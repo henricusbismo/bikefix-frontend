@@ -24,10 +24,11 @@ jobs:
       - name: Build Astro Site
         run: npm run build
         env:
+          # This passes your LocalWP endpoint details into the production builder machine
           WORDPRESS_API_URL: "https://journey:robust@macho-newsletter.localsite.io/wp-json/wp/v2"
 
       - name: Stream Files to bunny.net Edge Storage
-        uses: amesb/bunnycdn-storage-deploy@v2
+        uses: ayesh/bunnycdn-storage-deploy@v2
         with:
           source: "dist"
           storageZoneName: "bikefixdb"
