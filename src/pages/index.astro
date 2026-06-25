@@ -3,13 +3,25 @@ const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://macho-newsletter.lo
 const basicAuth = btoa('journey:robust');
 
 let posts = [];
+let debugError = null;
+let rawResponseJson = "";
+
 try {
   const res = await fetch(`${apiUrl}/wp/v2/symptoms&per_page=100&_embed`, {
     headers: { 'Authorization': `Basic ${basicAuth}` }
   });
-  posts = await res.json();
+  
+  const textData = await res.text(); // Read raw text first so it can't crash JSON parsing
+  rawResponseJson = textData;
+  
+  const parsed = JSON.parse(textData);
+  if (Array.isArray(parsed)) {
+    posts = parsed;
+  } else {
+    debugError = `WordPress didn't send an array. Response code: ${res.status}. Data looks like: ${textData.substring(0, 200)}`;
+  }
 } catch (e) {
-  console.error("Home page fetch failed", e);
+  debugError = `Connection Failed: ${e.message}`;
 }
 
 const formatDate = (dateStr) => {
@@ -52,151 +64,32 @@ const formatDate = (dateStr) => {
             text-decoration: none;
             color: #000000;
         }
-        .logo-t {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.8rem;
-            font-weight: 900;
-            margin-right: 8px;
-            line-height: 1;
-        }
-        .logo-divider {
-            width: 1px;
-            height: 22px;
-            background-color: #cccccc;
-            margin-right: 8px;
-        }
-        .logo-text {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.75rem;
-            font-weight: 900;
-            letter-spacing: -0.8px;
-            line-height: 1;
-        }
-        .search-container {
-            flex-grow: 1;
-            max-width: 580px;
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        .search-input {
-            width: 100%;
-            height: 40px;
-            padding: 0 16px 0 165px;
-            font-size: 0.92rem;
-            border: 1px solid #000000;
-            border-radius: 20px;
-            font-family: 'Inter', sans-serif;
-            outline: none;
-            box-sizing: border-box;
-            color: #000000;
-        }
-        .search-input::placeholder {
-            color: #999999;
-            font-size: 0.92rem;
-        }
-        .search-badge {
-            position: absolute;
-            left: 14px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 700;
-            font-size: 0.88rem;
-            color: #000000;
-            pointer-events: none;
-            white-space: nowrap;
-        }
-        .search-badge .star-icon {
-            color: #4f46e5;
-            font-size: 1.2rem;
-            line-height: 1;
-        }
-        .auth-actions {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-shrink: 0;
-        }
-        .btn-signup {
-            font-size: 0.88rem;
-            font-weight: 600;
-            color: #000000;
-            text-decoration: none;
-        }
-        .btn-login {
-            font-size: 0.88rem;
-            font-weight: 700;
-            background: #000000;
-            color: #ffffff;
-            padding: 8px 16px;
-            border-radius: 4px;
-            text-decoration: none;
-        }
-        .nav-menu {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0 24px 0;
-            overflow-x: auto;
-            gap: 16px;
-            scrollbar-width: none;
-        }
+        .logo-t { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 900; margin-right: 8px; line-height: 1; }
+        .logo-divider { width: 1px; height: 22px; background-color: #cccccc; margin-right: 8px; }
+        .logo-text { font-family: 'Playfair Display', serif; font-size: 1.75rem; font-weight: 900; letter-spacing: -0.8px; line-height: 1; }
+        
+        .search-container { flex-grow: 1; max-width: 580px; position: relative; display: flex; align-items: center; }
+        .search-input { width: 100%; height: 40px; padding: 0 16px 0 165px; font-size: 0.92rem; border: 1px solid #000000; border-radius: 20px; font-family: 'Inter', sans-serif; outline: none; box-sizing: border-box; color: #000000; }
+        .search-badge { position: absolute; left: 14px; display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.88rem; color: #000000; pointer-events: none; white-space: nowrap; }
+        .search-badge .star-icon { color: #4f46e5; font-size: 1.2rem; line-height: 1; }
+        
+        .auth-actions { display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+        .btn-signup { font-size: 0.88rem; font-weight: 600; color: #000000; text-decoration: none; }
+        .btn-login { font-size: 0.88rem; font-weight: 700; background: #000000; color: #ffffff; padding: 8px 16px; border-radius: 4px; text-decoration: none; }
+        
+        .nav-menu { display: flex; justify-content: space-between; padding: 12px 0 24px 0; overflow-x: auto; gap: 16px; scrollbar-width: none; }
         .nav-menu::-webkit-scrollbar { display: none; }
-        .nav-link {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #000000;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-        .nav-link:hover { color: #0066cc; }
-        .disclaimer-section {
-            background-color: #f9f9f9;
-            padding: 14px 0;
-            text-align: center;
-        }
-        .disclaimer-text {
-            font-size: 0.85rem;
-            color: #333333;
-            margin: 0;
-            line-height: 1.4;
-        }
-        .disclaimer-text strong {
-            color: #000000;
-            text-decoration: underline;
-            cursor: pointer;
-        }
-        .header-bottom-line {
-            border: none;
-            border-top: 1.5px solid #000000;
-            margin: 16px 0 40px 0;
-            padding: 0;
-        }
-        h1.section-title { 
-            font-family: 'Playfair Display', serif; 
-            font-size: 2.5rem; 
-            font-weight: 800;
-            margin-bottom: 40px;
-        }
-        .articles-list { 
-            display: flex;
-            flex-direction: column;
-            gap: 35px;
-        }
-        .article-card { 
-            display: flex;
-            gap: 30px;
-            align-items: flex-start;
-            padding-bottom: 35px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .thumbnail-wrapper {
-            flex-shrink: 0;
-            width: 280px;
-            height: 180px;
-            background-color: #f7f7f7;
-            overflow: hidden;
-        }
+        .nav-link { font-size: 0.95rem; font-weight: 700; color: #000000; text-decoration: none; white-space: nowrap; }
+        
+        .disclaimer-section { background-color: #f9f9f9; padding: 14px 0; text-align: center; }
+        .disclaimer-text { font-size: 0.85rem; color: #333333; margin: 0; line-height: 1.4; }
+        .disclaimer-text strong { color: #000000; text-decoration: underline; }
+        .header-bottom-line { border: none; border-top: 1.5px solid #000000; margin: 16px 0 40px 0; padding: 0; }
+        
+        h1.section-title { font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 800; margin-bottom: 40px; }
+        .articles-list { display: flex; flex-direction: column; gap: 35px; }
+        .article-card { display: flex; gap: 30px; align-items: flex-start; padding-bottom: 35px; border-bottom: 1px solid #f0f0f0; }
+        .thumbnail-wrapper { flex-shrink: 0; width: 280px; height: 180px; background-color: #f7f7f7; overflow: hidden; }
         .thumbnail-wrapper img { width: 100%; height: 100%; object-fit: cover; }
         .content-block { display: flex; flex-direction: column; gap: 8px; }
         .article-title { font-size: 1.4rem; font-weight: 700; margin: 0; }
@@ -204,15 +97,16 @@ const formatDate = (dateStr) => {
         .article-title a:hover { color: #0066cc; text-decoration: underline; }
         .excerpt { font-size: 1rem; color: #4a4a4a; line-height: 1.5; margin: 0; }
         .updated-date { font-size: 0.85rem; color: #666666; font-weight: 500; margin-top: 4px; }
-
-        @media (max-width: 768px) {
-            .site-header { flex-direction: column; align-items: stretch; gap: 16px; }
-            .search-container { max-width: 100%; }
-            .search-input { padding-left: 155px; }
-            .auth-actions { justify-content: space-between; }
-            .nav-menu { justify-content: flex-start; }
-            .article-card { flex-direction: column; gap: 15px; }
-            .thumbnail-wrapper { width: 100%; height: 200px; }
+        
+        /* Debug Box Styles */
+        .debug-box {
+            background-color: #fff5f5;
+            border: 2px dashed #e53e3e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 6px;
+            color: #c53030;
+            font-family: monospace;
         }
     </style>
 </head>
@@ -229,13 +123,7 @@ const formatDate = (dateStr) => {
             <div class="search-badge">
                 <span class="star-icon">✦</span> Ask Wirecutter Finder
             </div>
-            <input 
-                type="text" 
-                id="directorySearch" 
-                class="search-input" 
-                placeholder="Gift ideas for a baby shower" 
-                autocomplete="off"
-            />
+            <input type="text" id="directorySearch" class="search-input" placeholder="Gift ideas for a baby shower" autocomplete="off" />
         </div>
 
         <div class="auth-actions">
@@ -266,10 +154,24 @@ const formatDate = (dateStr) => {
 
     <h1 class="section-title">All Reviews</h1>
 
-    <main class="articles-list">
-        {Array.isArray(posts) && posts.map((post) => {
-            if (!post) return null;
+    <!-- Visual Debugger Window -->
+    {debugError && (
+        <div class="debug-box">
+            <h3>⚠️ Database Sync Error Details</h3>
+            <p>{debugError}</p>
+            <p><strong>Total articles loaded in component state:</strong> {posts.length}</p>
+        </div>
+    )}
 
+    <main class="articles-list">
+        {posts.length === 0 && !debugError && (
+            <div class="debug-box" style="background:#f0f4f8; border-color:#0066cc; color:#004488;">
+                <h3>ℹ️ Connection okay, but 0 articles found.</h3>
+                <p>Verify your Custom Post Type API slug is exactly <code>symptoms</code> and that the posts are set to "Public".</p>
+            </div>
+        )}
+
+        {posts.map((post) => {
             let brandSlug = '';
             let modelSlug = '';
             
@@ -289,16 +191,14 @@ const formatDate = (dateStr) => {
 
             const featuredImage = post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
             
-            // Safe plain text compilation for searching strings without crashing on empty values
             const rawBodyText = post.content?.rendered ? post.content.rendered.replace(/<\/?[^>]+(>|$)/g, "") : "";
             const rawExcerptText = post.excerpt?.rendered ? post.excerpt.rendered.replace(/<\/?[^>]+(>|$)/g, "") : "";
-            const searchHaystack = `${post.title?.rendered || ''} ${rawBodyText} ${brandSlug} ${modelSlug}`.toLowerCase();
 
             return (
-                <article class="article-card" data-search-content={searchHaystack}>
+                <article class="article-card">
                     <div class="thumbnail-wrapper">
                         {featuredImage ? (
-                            <img src={featuredImage} alt={post.title?.rendered || 'Article Image'} loading="lazy" />
+                            <img src={featuredImage} alt={post.title?.rendered} loading="lazy" />
                         ) : (
                             <div style="width:100%; height:100%; background:#eaeaea; display:flex; align-items:center; justify-content:center; color:#999; font-size:0.9rem;">No Image</div>
                         )}
@@ -306,44 +206,17 @@ const formatDate = (dateStr) => {
 
                     <div class="content-block">
                         <h2 class="article-title">
-                            <a href={hrefPath} set:html={post.title?.rendered || 'Untitled Article'} />
+                            <a href={hrefPath} set:html={post.title?.rendered || 'Untitled'} />
                         </h2>
-                        
                         <div class="excerpt">
-                          {rawExcerptText && rawExcerptText.trim() !== "" ? (
-                            <span set:html={post.excerpt.rendered} />
-                          ) : (
-                            <span>
-                              {rawBodyText && rawBodyText.trim() !== "" 
-                                ? rawBodyText.substring(0, 160) + "..."
-                                : "Read our deep breakdown and troubleshooting diagnosis steps for this bike entry."}
-                            </span>
-                          )}
+                            <span>{rawExcerptText.trim() !== "" ? rawExcerptText : (rawBodyText.trim() !== "" ? rawBodyText.substring(0, 160) + "..." : "No text available.")}</span>
                         </div>
-                        
                         <p class="updated-date">{formatDate(post.date)}</p>
                     </div>
                 </article>
             );
         })}
     </main>
-
-    <script>
-        const searchInput = document.getElementById('directorySearch');
-        const cards = document.querySelectorAll('.article-card');
-
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                const target = e.target as HTMLInputElement;
-                const query = target.value.toLowerCase().trim();
-                cards.forEach(card => {
-                    const htmlCard = card as HTMLElement;
-                    const content = htmlCard.getAttribute('data-search-content') || '';
-                    htmlCard.style.display = content.includes(query) ? 'flex' : 'none';
-                });
-            });
-        }
-    </script>
 
 </body>
 </html>
