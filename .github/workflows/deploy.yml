@@ -18,8 +18,8 @@ jobs:
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-cache: 'npm'
-          node-version: 20
+          node-version: 24
+          cache: 'npm' # <-- Fixed parameter name from node-cache to cache
 
       - name: Install Dependencies
         run: npm ci
