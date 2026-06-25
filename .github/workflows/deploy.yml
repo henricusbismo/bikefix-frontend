@@ -1,0 +1,35 @@
+name: Deploy Astro to bunny.net
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Astro Site
+        run: npm run build
+        env:
+          WORDPRESS_API_URL: "https://journey:robust@macho-newsletter.localsite.io/wp-json/wp/v2"
+
+      - name: Stream Files to bunny.net Edge Storage
+        uses: amesb/bunnycdn-storage-deploy@v2
+        with:
+          source: "dist"
+          storageZoneName: "bikefixdb"
+          storagePassword: ${{ secrets.BUNNY_STORAGE_PASSWORD }}
+          purgePullZone: false
