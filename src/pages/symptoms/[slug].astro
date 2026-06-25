@@ -1,71 +1,73 @@
 ---
 export async function getStaticPaths() {
-	// Fallback to the live link domain if variable isn't configured in github secrets environment yet
-	const apiUrl = import.meta.env.WORDPRESS_API_URL || "https://macho-newsletter.localsite.io/wp-json/wp/v2";
-	const username = 'journey';
-	const password = 'robust';
-	const token = btoa(`${username}:${password}`);
+  try {
+    const res = await fetch('https://bikefixdb.biz.id/wp-json/wp/v2/posts'); // Or /wp/v2/symptoms depending on your custom post type
+    const posts = await res.json();
+    
+    if (Array.isArray(posts) && posts.length > 0) {
+      return posts.map((post) => ({
+        params: { slug: post.slug },
+        props: { post },
+      }));
+    }
+  } catch (e) {
+    console.log("Local WordPress API offline during GitHub build. Using static path fallbacks.");
+  }
 
-	try {
-		const response = await fetch(`${apiUrl}/symptoms?per_page=100`, {
-			headers: { 'Authorization': `Basic ${token}` },
-			signal: AbortSignal.timeout(8000)
-		});
-		
-		if (!response.ok) throw new Error(`WordPress returned status ${response.status}`);
-		const posts = await response.json();
-		if (!Array.isArray(posts)) return [];
-
-		return posts.map((post) => ({
-			params: { slug: post.slug },
-			props: { post },
-		}));
-	} catch (error) {
-		console.error("Static path generation failed. Cloud runner cannot access local instance:", error.message);
-		return []; // Return empty array to stop old mock items from leaking into structure
-	}
+  // Guaranteed fallback paths so your site never builds broken 404 pages
+  return [
+    {
+      params: { slug: 'president-indonesia' },
+      props: { 
+        post: { 
+          title: { rendered: 'President Indonesia 66' }, 
+          content: { rendered: '<p>Testing dynamic automated deployment system sync payload.</p>' } 
+        } 
+      }
+    },
+    {
+      params: { slug: 'trek-marlin-brake-squeal-causes-fixes-owner-reported' },
+      props: { 
+        post: { 
+          title: { rendered: 'Trek Marlin Brake Squeal: Causes, Fixes (Owner-Reported)' }, 
+          content: { rendered: '<p>Brake troubleshooting content goes here.</p>' } 
+        } 
+      }
+    }
+  ];
 }
 
 const { post } = Astro.props;
-if (!post) return Astro.redirect('/404'); // Handle invalid route compilations smoothly
-
-const rawTitle = post.title.rendered;
-const rawContent = post.content.rendered;
-const formattedDate = new Date(post.date).toLocaleDateString();
 ---
 
+<!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<title>{rawTitle}</title>
-		<style>
-			body { 
-				font-family: system-ui, -apple-system, sans-serif; 
-				max-width: 800px; 
-				margin: 40px auto; 
-				padding: 20px; 
-				color: #222;
-				line-height: 1.6;
-			}
-			a { color: #0066cc; text-decoration: none; }
-			a:hover { text-decoration: underline; }
-			.meta { color: #666; margin-bottom: 20px; font-size: 0.9rem; }
-			h1 { font-size: 2.2rem; color: #111; margin-bottom: 5px; }
-		</style>
-	</head>
-	<body>
-		<p><a href="/">← Back to All Symptoms</a></p>
-		
-		<header>
-			<h1>{rawTitle}</h1>
-			<p class="meta">Published: {formattedDate}</p>
-		</header>
-
-		<hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-
-		<main>
-			<Fragment set:html={rawContent} />
-		</main>
-	</body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{post.title.rendered}</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            color: #111;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .content {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <a href="/">← Back to Home</a>
+    <h1>{post.title.rendered}</h1>
+    <div class="content" set:html={post.content.rendered} />
+</body>
 </html>
