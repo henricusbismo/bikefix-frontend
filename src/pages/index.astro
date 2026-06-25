@@ -1,7 +1,5 @@
 ---
 const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://macho-newsletter.localsite.io/?rest_route=';
-
-// Encodes your specific LocalWP Live Link credentials into standard Base64 format
 const basicAuthToken = btoa('journey:robust');
 
 let posts = [];
@@ -21,7 +19,7 @@ try {
     if (Array.isArray(parsed)) {
       posts = parsed;
     } else {
-      debugError = `Connected, but response was not a structured data array. Check for HTML interceptors.`;
+      debugError = `Connected, but response was not a structured data array.`;
     }
   } else {
     debugError = `Server returned status code: ${res.status}. Your LocalWP tunnel credentials may have expired.`;
@@ -42,7 +40,7 @@ const formatDate = (dateStr) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bike Fix Directory - All Reviews</title>
+    <title>Bike Fix Database - All Reviews</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
@@ -122,16 +120,16 @@ const formatDate = (dateStr) => {
 
     <header class="site-header">
         <a href="/" class="logo-container">
-            <span class="logo-t">T</span>
+            <span class="logo-t">B</span>
             <div class="logo-divider"></div>
-            <span class="logo-text">Wirecutter</span>
+            <span class="logo-text">Bikefixdb</span>
         </a>
         
         <div class="search-container">
             <div class="search-badge">
-                <span class="star-icon">✦</span> Ask Wirecutter Finder
+                <span class="star-icon">✦</span> Ask Bikefix Database
             </div>
-            <input type="text" id="directorySearch" class="search-input" placeholder="Gift ideas for a baby shower" autocomplete="off" />
+            <input type="text" id="directorySearch" class="search-input" placeholder="I broke my chain" autocomplete="off" />
         </div>
 
         <div class="auth-actions">
@@ -149,7 +147,7 @@ const formatDate = (dateStr) => {
         <a href="#" class="nav-link">Baby & Kid</a>
         <a href="#" class="nav-link">Style</a>
         <a href="#" class="nav-link">Gifts</a>
-        <a href="#" class="nav-link">Wirecutter Store</a>
+        <a href="#" class="nav-link">Bikefixdb Store</a>
     </nav>
 
     <div class="disclaimer-section">
@@ -188,8 +186,14 @@ const formatDate = (dateStr) => {
             const hrefPath = brandSlug ? `/${brandSlug}/${modelSlug ? modelSlug : 'all'}/${post.slug || ''}` : `/${post.slug || ''}`;
             const featuredImage = post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
             
-            const rawBodyText = post.content?.rendered ? post.content.rendered.replace(/<\/?[^>]+(>|$)/g, "") : "";
-            const rawExcerptText = post.excerpt?.rendered ? post.excerpt.rendered.replace(/<\/?[^>]+(>|$)/g, "") : "";
+            // Clean HTML formatting tags and decode native WordPress typography entities safely
+            const rawBodyText = post.content?.rendered 
+                ? post.content.rendered.replace(/<\/?[^>]+(>|$)/g, "").replace(/&#8217;/g, "'").replace(/&#8220;/g, '"').replace(/&#8221;/g, '"') 
+                : "";
+            const rawExcerptText = post.excerpt?.rendered 
+                ? post.excerpt.rendered.replace(/<\/?[^>]+(>|$)/g, "").replace(/&#8217;/g, "'").replace(/&#8220;/g, '"').replace(/&#8221;/g, '"') 
+                : "";
+                
             const searchHaystack = `${post.title?.rendered || ''} ${rawBodyText} ${brandSlug} ${modelSlug}`.toLowerCase();
 
             return (
