@@ -27,7 +27,7 @@ jobs:
           WORDPRESS_API_URL: "https://journey:robust@macho-newsletter.localsite.io/wp-json/wp/v2"
 
       - name: Stream Files to bunny.net Edge Storage
-        uses: ayeressian/bunnycdn-storage-deploy@v2.4.6
+        uses: ayeressian/bunnycdn-storage-deploy@v2.4.5
         with:
           source: "dist"
           storageZoneName: "bikefixdb"
