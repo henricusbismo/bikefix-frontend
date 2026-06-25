@@ -6,7 +6,7 @@ let errorMsg = null;
 
 try {
 	const response = await fetch(`${apiUrl}/symptoms?per_page=100`, {
-		signal: AbortSignal.timeout(5000) // Timeout after 5 seconds if offline
+		signal: AbortSignal.timeout(5000)
 	});
 	
 	if (!response.ok) throw new Error(`WordPress returned status ${response.status}`);
@@ -14,8 +14,9 @@ try {
 	if (!Array.isArray(symptoms)) symptoms = [];
 } catch (error) {
 	errorMsg = error.message;
-	// Fallback mock data for local previewing/offline builds
+	// Fallback mock data matching your current live links
 	symptoms = [
+		{ slug: "trek-marlin-brake-squealing", title: { rendered: "Trek Marlin Brake Squealing Fix" } },
 		{ slug: "squeaky-brakes", title: { rendered: "Squeaky Brakes Troubleshooting" } },
 		{ slug: "slipping-chain", title: { rendered: "Bicycle Chain Slipping Guide" } },
 		{ slug: "loose-handlebars", title: { rendered: "How to Fix Loose Handlebars" } }
