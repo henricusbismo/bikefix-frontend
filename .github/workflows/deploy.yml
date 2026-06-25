@@ -30,12 +30,12 @@ jobs:
           WORDPRESS_API_URL: "https://bikefixdb.biz.id/wp-json"
 
       - name: Deploy Production Files to Bunny Storage
-        uses: samuelmeuli/action-bunnycdn@v2
+        uses: ayeressian/bunnycdn-storage-deploy@v2.4.5
         with:
-          # Your Main Bunny Account API Key
-          api_key: ${{ secrets.BUNNY_ACCOUNT_API_KEY }}
-          storage_zone: 'bikefixdb'
-          pull_zone: ${{ secrets.BUNNY_PULL_ZONE_ID }}
-          upload: true
-          remove_old: true
-          local_path: './dist'
+          source: "dist"
+          storageZoneName: "bikefixdb"
+          storagePassword: ${{ secrets.BUNNY_STORAGE_PASSWORD }}
+          accessKey: ${{ secrets.BUNNY_ACCOUNT_API_KEY }}
+          pullZoneId: ${{ secrets.BUNNY_PULL_ZONE_ID }}
+          upload: "true"
+          remove: "true"
