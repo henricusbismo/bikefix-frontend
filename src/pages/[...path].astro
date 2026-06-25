@@ -4,7 +4,6 @@ export async function getStaticPaths() {
   
   try {
     const basicAuth = btoa('journey:robust');
-    // _embed tells WordPress to attach categories and taxonomy metadata directly to the JSON response
     const res = await fetch(`${apiUrl}/wp/v2/symptoms&per_page=100&_embed`, {
       headers: {
         'Authorization': `Basic ${basicAuth}`
@@ -17,25 +16,31 @@ export async function getStaticPaths() {
         let brandSlug = '';
         let modelSlug = '';
         
-        // Grab the embedded term data safely
-        const terms = post._embedded?.['wp:term']?.[0] || [];
+        // Extract embedded taxonomy term layers safely
+        const embeddedTerms = post._embedded?.['wp:term'] || [];
         
-        // Find the child category (bike model) and parent category (bike brand)
-        const childCat = terms.find(term => term.parent !== 0);
-        const parentCat = terms.find(term => term.parent === 0);
+        // Loop over the groups to locate your custom taxonomy items
+        embeddedTerms.forEach((taxonomyGroup) => {
+          if (Array.isArray(taxonomyGroup)) {
+            taxonomyGroup.forEach((term) => {
+              if (term.taxonomy === 'brands') {
+                brandSlug = term.slug;
+              }
+              if (term.taxonomy === 'models') {
+                modelSlug = term.slug;
+              }
+            });
+          }
+        });
         
-        if (childCat && parentCat) {
-          // If both exist -> /brand/model/symptom-slug
-          brandSlug = parentCat.slug;
-          modelSlug = childCat.slug;
-        } else if (parentCat) {
-          // If only brand exists -> /brand/all/symptom-slug
-          brandSlug = parentCat.slug;
-          modelSlug = 'all';
+        // Construct paths cleanly: brand/model/post-slug -> giant/talon/chain-skipping
+        // Falls back safely if an article is left untagged
+        let finalPath = post.slug;
+        if (brandSlug && modelSlug) {
+          finalPath = `${brandSlug}/${modelSlug}/${post.slug}`;
+        } else if (brandSlug) {
+          finalPath = `${brandSlug}/all/${post.slug}`;
         }
-        
-        // Build the nested url path. If no category exists, it falls back to root /symptom-slug
-        const finalPath = brandSlug ? `${brandSlug}/${modelSlug}/${post.slug}` : post.slug;
         
         return {
           params: { path: finalPath },
@@ -44,7 +49,7 @@ export async function getStaticPaths() {
       });
     }
   } catch (error) {
-    console.error("Failed to compile nested directory paths:", error);
+    console.error("Failed to compile custom taxonomy paths:", error);
   }
 
   return [];

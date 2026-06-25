@@ -1,52 +1,39 @@
----
-// Fetching the posts on the homepage with _embed so links can read the categories
-const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://macho-newsletter.localsite.io/?rest_route=';
-const basicAuth = btoa('journey:robust');
-
-let posts = [];
-try {
-  const res = await fetch(`${apiUrl}/wp/v2/symptoms&per_page=100&_embed`, {
-    headers: { 'Authorization': `Basic ${basicAuth}` }
-  });
-  posts = await res.json();
-} catch (e) {
-  console.error("Home page fetch failed", e);
-}
----
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bike Fix Directory</title>
-    <style>
-        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
-        ul { padding: 0; list-style: none; }
-        li { margin: 15px 0; }
-        a { color: #0066cc; text-decoration: none; font-size: 1.2rem; font-weight: bold; }
-        a:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-    <h1>Symptoms Directory</h1>
-    <ul>
-        {Array.isArray(posts) && posts.map((post) => {
-            const terms = post._embedded?.['wp:term']?.[0] || [];
-            const childCat = terms.find(term => term.parent !== 0);
-            const parentCat = terms.find(term => term.parent === 0);
+{Array.isArray(posts) && posts.map((post) => {
+            let brandSlug = '';
+            let modelSlug = '';
             
-            // Build matching link paths dynamically
-            const hrefPath = parentCat 
-                ? `/${parentCat.slug}/${childCat ? childCat.slug : 'all'}/${post.slug}` 
+            const embeddedTerms = post._embedded?.['wp:term'] || [];
+            embeddedTerms.forEach((taxonomyGroup) => {
+              if (Array.isArray(taxonomyGroup)) {
+                taxonomyGroup.forEach((term) => {
+                  if (term.taxonomy === 'brands') brandSlug = term.slug;
+                  if (term.taxonomy === 'models') modelSlug = term.slug;
+                });
+              }
+            });
+
+            const hrefPath = brandSlug 
+                ? `/${brandSlug}/${modelSlug ? modelSlug : 'all'}/${post.slug}` 
                 : `/${post.slug}`;
 
+            const featuredImage = post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
+
             return (
-                <li>
-                    <a href={hrefPath}>{post.title.rendered}</a>
-                </li>
+                <article class="article-card">
+                    <div class="thumbnail-wrapper">
+                        {featuredImage ? (
+                            <img src={featuredImage} alt={post.title.rendered} loading="lazy" />
+                        ) : (
+                            <div style="width:100%; height:100%; background:#eaeaea; display:flex; align-items:center; justify-content:center; color:#999; font-size:0.9rem;">No Image</div>
+                        )}
+                    </div>
+                    <div class="content-block">
+                        <h2 class="article-title">
+                            <a href={hrefPath} set:html={post.title.rendered} />
+                        </h2>
+                        <div class="excerpt" set:html={post.excerpt?.rendered || 'Read details...'} />
+                        <p class="updated-date">Updated</p>
+                    </div>
+                </article>
             );
         })}
-    </ul>
-</body>
-</html>
