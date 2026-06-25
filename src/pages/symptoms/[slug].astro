@@ -21,7 +21,6 @@ export async function getStaticPaths() {
 		}));
 	} catch (error) {
 		console.warn("Skipping dynamic path generation on offline build container:", error.message);
-		// Explicitly map out the offline testing slugs to stop 404 generation errors
 		return [
 			{ params: { slug: "trek-marlin-brake-squealing" } },
 			{ params: { slug: "squeaky-brakes" } },
@@ -32,8 +31,27 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-const rawTitle = post?.title?.rendered || "Trek Marlin Diagnostic Guide";
-const rawContent = post?.content?.rendered || "<p>This is dynamic fallback placeholder content for offline pipeline verification.</p>";
+const rawTitle = post?.title?.rendered || "Trek Marlin Brake Squealing Fix";
+
+// This text displays when GitHub builds without a live connection to your laptop's database
+const defaultContent = `
+	<p>If your Trek Marlin disc brakes are squealing loudly, it is typically caused by contaminated pads, a glazed friction surface, or misaligned brake calipers.</p>
+	
+	<div style="background: #f0f7ff; padding: 15px; border-left: 4px solid #0066cc; margin: 20px 0; border-radius: 4px;">
+		<strong>Common Causes:</strong> Touching the brake rotors with oily fingers, chain lube overspray, or mud accumulation on wet trail rides.
+	</div>
+
+	<h3>Step-by-Step Troubleshooting Guide</h3>
+	<ol style="line-height: 1.6; padding-left: 20px;">
+		<li style="margin-bottom: 10px;"><strong>Decontaminate the Rotor:</strong> Spray the metal brake rotor heavily with 91% or higher Isopropyl Alcohol. Wipe it down completely clean using a fresh, lint-free shop towel. Do not use regular cloths that might have detergent oils on them.</li>
+		<li style="margin-bottom: 10px;"><strong>Deglaze the Brake Pads:</strong> Safely remove your brake pads from the caliper. Take a sheet of 120-grit sandpaper, place it flat on a table, and gently rub the pads in a circular motion until the shiny, glazed top layer is worn away, exposing fresh friction material.</li>
+		<li style="margin-bottom: 10px;"><strong>Realign the Hydraulic Caliper:</strong> Put the pads back in. Loosen the two main bolts holding your brake caliper to the bike frame just enough so the caliper can wiggle. Squeeze and hold the handlebar brake lever down firmly—this forces the caliper to center itself over the rotor. While continuing to squeeze the lever tightly, torque both caliper bolts back down evenly.</li>
+	</ol>
+
+	<p style="margin-top: 20px; color: #555;"><em>Tip: Go out to a safe street and perform 10-15 hard stops from a moderate speed to properly "bed-in" the freshly sanded pads into the rotor surface.</em></p>
+`;
+
+const rawContent = post?.content?.rendered || defaultContent;
 const formattedDate = post?.date ? new Date(post.date).toLocaleDateString() : "June 25, 2026";
 ---
 
@@ -44,21 +62,23 @@ const formattedDate = post?.date ? new Date(post.date).toLocaleDateString() : "J
 		<title>{rawTitle}</title>
 		<style>
 			body { 
-				font-family: sans-serif; 
+				font-family: system-ui, -apple-system, sans-serif; 
 				max-width: 800px; 
 				margin: 40px auto; 
 				padding: 20px; 
 				color: #222;
 				background-color: #ffffff;
+				line-height: 1.5;
 			}
-			a { color: #0066cc; }
-			.meta { color: #666; margin-bottom: 20px; }
+			a { color: #0066cc; text-decoration: none; }
+			a:hover { text-decoration: underline; }
+			.meta { color: #666; margin-bottom: 20px; font-size: 0.9rem; }
 			main * {
-				display: block !important;
 				visibility: visible !important;
 				opacity: 1 !important;
-				color: #222 !important;
 			}
+			h1 { font-size: 2.2rem; color: #111; margin-bottom: 5px; }
+			h3 { font-size: 1.4rem; color: #333; margin-top: 30px; }
 		</style>
 	</head>
 	<body>
@@ -69,7 +89,7 @@ const formattedDate = post?.date ? new Date(post.date).toLocaleDateString() : "J
 			<p class="meta">Published: {formattedDate}</p>
 		</header>
 
-		<hr />
+		<hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
 
 		<main>
 			<Fragment set:html={rawContent} />
