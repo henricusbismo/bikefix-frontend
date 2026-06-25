@@ -1,9 +1,15 @@
 ---
 export async function getStaticPaths() {
-  const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://journey:robust@macho-newsletter.localsite.io/?rest_route=';
+  const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://macho-newsletter.localsite.io/?rest_route=';
+  const basicAuthToken = btoa('journey:robust');
   
   try {
-    const res = await fetch(`${apiUrl}/wp/v2/symptoms&per_page=100&_embed`);
+    const res = await fetch(`${apiUrl}/wp/v2/symptoms&per_page=100&_embed`, {
+      headers: {
+        'Authorization': `Basic ${basicAuthToken}`
+      }
+    });
+    
     const posts = await res.json();
     if (Array.isArray(posts)) {
       return posts.map((post) => {

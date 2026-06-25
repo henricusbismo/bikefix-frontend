@@ -1,11 +1,19 @@
 ---
-const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://journey:robust@macho-newsletter.localsite.io/?rest_route=';
+const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://macho-newsletter.localsite.io/?rest_route=';
+
+// Encodes your specific LocalWP Live Link credentials into standard Base64 format
+const basicAuthToken = btoa('journey:robust');
 
 let posts = [];
 let debugError = null;
 
 try {
-  const res = await fetch(`${apiUrl}/wp/v2/symptoms&per_page=100&_embed`);
+  const res = await fetch(`${apiUrl}/wp/v2/symptoms&per_page=100&_embed`, {
+    headers: {
+      'Authorization': `Basic ${basicAuthToken}`
+    }
+  });
+  
   const textData = await res.text();
   
   if (res.status === 200) {
@@ -13,10 +21,10 @@ try {
     if (Array.isArray(parsed)) {
       posts = parsed;
     } else {
-      debugError = `Connected, but response was not a structured data array.`;
+      debugError = `Connected, but response was not a structured data array. Check for HTML interceptors.`;
     }
   } else {
-    debugError = `Server returned status code: ${res.status}. Double check your LocalWP Live Link app toggle.`;
+    debugError = `Server returned status code: ${res.status}. Your LocalWP tunnel credentials may have expired.`;
   }
 } catch (e) {
   debugError = `Failed connecting to open tunnel endpoint: ${e.message}`;
