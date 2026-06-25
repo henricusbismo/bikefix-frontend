@@ -10,8 +10,10 @@ export async function getStaticPaths() {
     
     const posts = await res.json();
     if (Array.isArray(posts)) {
-      return posts.map((post) => {
-        if (!post) return null;
+      const paths = [];
+      
+      posts.forEach((post) => {
+        if (!post || !post.slug) return;
 
         let brandSlug = '';
         let modelSlug = '';
@@ -26,18 +28,18 @@ export async function getStaticPaths() {
           }
         });
         
-        let finalPath = post.slug || '';
+        // 1. Generate standard hierarchical custom taxonomy path matches
         if (brandSlug && modelSlug) {
-          finalPath = `${brandSlug}/${modelSlug}/${post.slug}`;
+          paths.push({ params: { path: `${brandSlug}/${modelSlug}/${post.slug}` }, props: { post } });
         } else if (brandSlug) {
-          finalPath = `${brandSlug}/all/${post.slug}`;
+          paths.push({ params: { path: `${brandSlug}/all/${post.slug}` }, props: { post } });
         }
         
-        return {
-          params: { path: finalPath },
-          props: { post },
-        };
-      }).filter(Boolean);
+        // 2. ALWAYS generate a flat, simple base slug fallback routing match rule
+        paths.push({ params: { path: post.slug }, props: { post } });
+      });
+      
+      return paths;
     }
   } catch (error) {
     console.error("Failed to compile custom taxonomy paths:", error);
@@ -68,7 +70,7 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
     
     <style>
-        /* Shared Shell Structure from Landing Page */
+        /* Shared Framework Layout Properties from Main Landing Layout */
         body { 
             font-family: 'Inter', sans-serif; 
             max-width: 1140px; 
@@ -115,7 +117,7 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
         .disclaimer-text strong { color: #000000; text-decoration: underline; }
         .header-bottom-line { border: none; border-top: 1.5px solid #000000; margin: 16px 0 40px 0; padding: 0; }
 
-        /* Dedicated Article Content Layout Matrix */
+        /* Unified Article Content Styles Layout */
         .article-container {
             max-width: 650px;
             margin: 0 auto 80px auto;
@@ -186,7 +188,6 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
 </head>
 <body>
 
-    <!-- Unified Shell Identity Elements -->
     <header class="site-header">
         <a href="/" class="logo-container">
             <span class="logo-t">B</span>
@@ -198,7 +199,6 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
             <div class="search-badge">
                 <span class="star-icon">✦</span> Ask Bikefix Database
             </div>
-            <!-- Standard dynamic input fallback redirecting interaction back to home list search -->
             <input 
                 type="text" 
                 class="search-input" 
@@ -234,7 +234,6 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
 
     <hr class="header-bottom-line" />
 
-    <!-- Article Content Layout Container -->
     <div class="article-container">
         {post ? (
             <article>
