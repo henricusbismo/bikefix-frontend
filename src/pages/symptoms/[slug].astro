@@ -1,0 +1,70 @@
+---
+export async function getStaticPaths() {
+	const apiUrl = import.meta.env.WORDPRESS_API_URL;
+	const username = 'journey';
+	const password = 'robust';
+	const token = btoa(`${username}:${password}`);
+
+	const response = await fetch(`${apiUrl}/symptoms?per_page=100`, {
+		headers: { 'Authorization': `Basic ${token}` }
+	});
+	const posts = await response.json();
+
+	if (!Array.isArray(posts)) return [];
+
+	return posts.map((post) => ({
+		params: { slug: post.slug },
+		props: { post },
+	}));
+}
+
+const { post } = Astro.props;
+
+// Strip out complex layout tags to extract just raw text paragraphs as a foolproof test
+const rawTitle = post.title?.rendered || "Untitled";
+const rawContent = post.content?.rendered || "";
+const formattedDate = post.date ? new Date(post.date).toLocaleDateString() : "";
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width" />
+		<title>{rawTitle}</title>
+		<style>
+			body { 
+				font-family: sans-serif; 
+				max-width: 800px; 
+				margin: 40px auto; 
+				padding: 20px; 
+				color: #222;
+				background-color: #ffffff;
+			}
+			a { color: #0066cc; }
+			.meta { color: #666; margin-bottom: 20px; }
+			
+			/* Crucial: Ensure nested blocks inside your 5,000 imports aren't accidentally hidden by display styles */
+			main * {
+				display: block !important;
+				visibility: visible !important;
+				opacity: 1 !important;
+				color: #222 !important;
+			}
+		</style>
+	</head>
+	<body>
+		<p><a href="/">← Back to All Symptoms</a></p>
+		
+		<header>
+			<h1>{rawTitle}</h1>
+			<p class="meta">Published: {formattedDate}</p>
+		</header>
+
+		<hr />
+
+		{/* Inject the absolute raw content block without any template restrictions */}
+		<main>
+			<Fragment set:html={rawContent} />
+		</main>
+	</body>
+</html>
