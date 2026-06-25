@@ -27,7 +27,8 @@ jobs:
       - name: Build Static Astro Site
         run: npm run build
         env:
-          WORDPRESS_API_URL: "https://bikefixdb.biz.id/?rest_route="
+          # Using your active macho-newsletter tunnel link
+          WORDPRESS_API_URL: "https://macho-newsletter.localsite.io/?rest_route="
 
       - name: Deploy Production Files to Bunny Storage
         uses: ayeressian/bunnycdn-storage-deploy@v2.4.5
