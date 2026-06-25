@@ -186,10 +186,19 @@ const formatDate = (dateStr) => {
             const hrefPath = brandSlug ? `/${brandSlug}/${modelSlug ? modelSlug : 'all'}/${post.slug || ''}` : `/${post.slug || ''}`;
             const featuredImage = post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
             
-            // Advanced text scrubber to drop hidden style/script engines completely out of strings
+            // Advanced text scrubber that prioritizes structural article body text
             const cleanText = (htmlString) => {
                 if (!htmlString) return "";
-                return htmlString
+                
+                // Match the content inside paragraph tags first, skipping navigation/breadcrumbs
+                const paragraphMatch = htmlString.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
+                let targetContent = htmlString;
+                
+                if (paragraphMatch && paragraphMatch[1] && !paragraphMatch[1].includes('›')) {
+                    targetContent = paragraphMatch[1];
+                }
+                
+                return targetContent
                     .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "")  
                     .replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, "") 
                     .replace(/<\/?[^>]+(>|$)/g, "")                     
@@ -213,7 +222,15 @@ const formatDate = (dateStr) => {
                             <a href={hrefPath} set:html={post.title?.rendered || 'Untitled Article'} />
                         </h2>
                         <div class="excerpt">
-                          <span>{rawExcerptText.trim() !== "" ? rawExcerptText : (rawBodyText.trim() !== "" ? rawBodyText.substring(0, 160) + "..." : "Read breakdown details...")}</span>
+                          <span>
+                            {rawExcerptText.trim() !== "" && !rawExcerptText.includes('›') ? (
+                              rawExcerptText
+                            ) : (
+                              rawBodyText.trim() !== "" 
+                                ? rawBodyText.substring(0, 160) + "..." 
+                                : "Read breakdown details..."
+                            )}
+                          </span>
                         </div>
                         <p class="updated-date">{formatDate(post.date)}</p>
                     </div>
