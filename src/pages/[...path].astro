@@ -28,14 +28,12 @@ export async function getStaticPaths() {
           }
         });
         
-        // 1. Generate standard hierarchical custom taxonomy path matches
         if (brandSlug && modelSlug) {
           paths.push({ params: { path: `${brandSlug}/${modelSlug}/${post.slug}` }, props: { post } });
         } else if (brandSlug) {
           paths.push({ params: { path: `${brandSlug}/all/${post.slug}` }, props: { post } });
         }
         
-        // 2. ALWAYS generate a flat, simple base slug fallback routing match rule
         paths.push({ params: { path: post.slug }, props: { post } });
       });
       
@@ -70,7 +68,6 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
     
     <style>
-        /* Shared Framework Layout Properties from Main Landing Layout */
         body { 
             font-family: 'Inter', sans-serif; 
             max-width: 1140px; 
@@ -80,12 +77,19 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
             background-color: #ffffff;
             -webkit-font-smoothing: antialiased;
         }
+
+        /* 🛠️ FIX: FLOATING HEADER IMPLEMENTATION */
         .site-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 24px 0 16px 0;
+            padding: 16px 0;
             gap: 32px;
+            position: sticky;      /* Anchors header during scrolling */
+            top: 0;
+            background-color: #ffffff;
+            z-index: 1000;         /* Floats securely on top of text paragraphs */
+            border-bottom: 1px solid #f0f0f0;
         }
         .logo-container {
             display: flex;
@@ -117,7 +121,7 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
         .disclaimer-text strong { color: #000000; text-decoration: underline; }
         .header-bottom-line { border: none; border-top: 1.5px solid #000000; margin: 16px 0 40px 0; padding: 0; }
 
-        /* Unified Article Content Styles Layout */
+        /* Article Container Core */
         .article-container {
             max-width: 650px;
             margin: 0 auto 80px auto;
@@ -146,14 +150,16 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
             font-weight: 500;
             margin-bottom: 24px;
         }
+
+        /* 🛠️ FIX: EXACT ARTICLE FEATURED MEDIA DIMENSIONING */
         .article-featured-media {
-            width: 100%;
-            height: auto;
-            max-height: 420px;
-            object-fit: cover;
+            width: 100%;             /* Spans flush across the column text layout width */
+            height: auto;            /* Scales down dynamically based on source content */
+            display: block;
             border-radius: 4px;
             margin-bottom: 35px;
         }
+
         .article-body-content {
             font-size: 1.125rem;
             color: #222222;
@@ -177,7 +183,7 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
         .article-body-content li { margin-bottom: 8px; }
 
         @media (max-width: 768px) {
-            .site-header { flex-direction: column; align-items: stretch; gap: 16px; }
+            .site-header { position: relative; gap: 16px; }
             .search-container { max-width: 100%; }
             .search-input { padding-left: 155px; }
             .auth-actions { justify-content: space-between; }
@@ -197,12 +203,12 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
         
         <div class="search-container">
             <div class="search-badge">
-                <span class="star-icon">✦</span> Ask Bikefix
+                <span class="star-icon">✦</span> Ask Bikefix Database
             </div>
             <input 
                 type="text" 
                 class="search-input" 
-                placeholder="  I broke my chain" 
+                placeholder="I broke my chain" 
                 onfocus="window.location.href='/?focus=search'"
                 readonly
             />
