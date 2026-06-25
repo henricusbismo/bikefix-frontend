@@ -54,7 +54,11 @@ const formatDate = (dateStr) => {
   return `Updated ${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
 };
 
-const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
+// 🛠️ FAILSAFE: Intercept and switch to Cloudinary CDN
+let featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
+if (!featuredImage || featuredImage.includes('macho-newsletter.localsite.io')) {
+  featuredImage = "https://res.cloudinary.com/damia0vku/image/upload/v1782390517/Giant-Talon-Chain-Skipping_c5td5j.avif";
+}
 ---
 
 <!DOCTYPE html>
@@ -78,17 +82,17 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* 🛠️ FIX: FLOATING HEADER IMPLEMENTATION */
+        /* Floating Sticky Header Layer */
         .site-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 16px 0;
             gap: 32px;
-            position: sticky;      /* Anchors header during scrolling */
+            position: sticky;      
             top: 0;
             background-color: #ffffff;
-            z-index: 1000;         /* Floats securely on top of text paragraphs */
+            z-index: 1000;         
             border-bottom: 1px solid #f0f0f0;
         }
         .logo-container {
@@ -121,7 +125,6 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
         .disclaimer-text strong { color: #000000; text-decoration: underline; }
         .header-bottom-line { border: none; border-top: 1.5px solid #000000; margin: 16px 0 40px 0; padding: 0; }
 
-        /* Article Container Core */
         .article-container {
             max-width: 650px;
             margin: 0 auto 80px auto;
@@ -151,10 +154,10 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
             margin-bottom: 24px;
         }
 
-        /* 🛠️ FIX: EXACT ARTICLE FEATURED MEDIA DIMENSIONING */
+        /* Responsive full-bleed content column images */
         .article-featured-media {
-            width: 100%;             /* Spans flush across the column text layout width */
-            height: auto;            /* Scales down dynamically based on source content */
+            width: 100%;             
+            height: auto;            
             display: block;
             border-radius: 4px;
             margin-bottom: 35px;
@@ -248,11 +251,9 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
                 <h1 class="article-header-title" set:html={post.title?.rendered} />
                 <div class="article-meta-row">{formatDate(post.date)}</div>
                 
-                // Automatically injects basic auth credentials into local media paths to bypass the login prompt
-let featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
-if (featuredImage && featuredImage.includes('macho-newsletter.localsite.io')) {
-  featuredImage = featuredImage.replace('https://', 'https://journey:robust@');
-}
+                {featuredImage && (
+                    <img src={featuredImage} alt={post.title?.rendered || 'Review Image'} class="article-featured-media" />
+                )}
                 
                 <div class="article-body-content" set:html={post.content?.rendered} />
             </article>
