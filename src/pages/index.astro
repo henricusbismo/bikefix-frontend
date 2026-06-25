@@ -311,7 +311,7 @@ const formatDate = (dateStr) => {
                 : `/${post.slug}`;
 
             const featuredImage = post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
-            const searchHaystack = `${post.title?.rendered} ${post.excerpt?.rendered} ${brandSlug} ${modelSlug}`.toLowerCase();
+            const searchHaystack = `${post.title?.rendered} ${post.content?.rendered || ''} ${brandSlug} ${modelSlug}`.toLowerCase();
 
             return (
                 <article class="article-card" data-search-content={searchHaystack}>
@@ -327,7 +327,21 @@ const formatDate = (dateStr) => {
                         <h2 class="article-title">
                             <a href={hrefPath} set:html={post.title?.rendered} />
                         </h2>
-                        <div class="excerpt" set:html={post.excerpt?.rendered || 'Read details...'} />
+                        
+                        <!-- Smart Dynamic Content Excerpt Extractor -->
+                        <div class="excerpt">
+                          {post.excerpt?.rendered && post.excerpt.rendered.trim() !== "" ? (
+                            <span set:html={post.excerpt.rendered} />
+                          ) : (
+                            /* Strips HTML tags from the full content body and cuts it cleanly at 160 characters */
+                            <span>
+                              {post.content?.rendered 
+                                ? post.content.rendered.replace(/<\/?[^>]+(>|$)/g, "").substring(0, 160) + "..."
+                                : "Read our deep breakdown and troubleshooting diagnosis steps for this bike entry."}
+                            </span>
+                          )}
+                        </div>
+                        
                         <p class="updated-date">{formatDate(post.date)}</p>
                     </div>
                 </article>
