@@ -30,7 +30,6 @@ const formatDate = (dateStr) => {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
     
     <style>
-        /* Exact Wirecutter Global Styles */
         body { 
             font-family: 'Inter', sans-serif; 
             max-width: 1140px; 
@@ -40,8 +39,6 @@ const formatDate = (dateStr) => {
             background-color: #ffffff;
             -webkit-font-smoothing: antialiased;
         }
-
-        /* 1. Main Header Row Matrix */
         .site-header {
             display: flex;
             align-items: center;
@@ -49,8 +46,6 @@ const formatDate = (dateStr) => {
             padding: 24px 0 16px 0;
             gap: 32px;
         }
-
-        /* Logo Group: T | Wirecutter Structure */
         .logo-container {
             display: flex;
             align-items: center;
@@ -77,8 +72,6 @@ const formatDate = (dateStr) => {
             letter-spacing: -0.8px;
             line-height: 1;
         }
-
-        /* 2. Exact Rounded Search Box Component Layout */
         .search-container {
             flex-grow: 1;
             max-width: 580px;
@@ -89,10 +82,10 @@ const formatDate = (dateStr) => {
         .search-input {
             width: 100%;
             height: 40px;
-            padding: 0 16px 0 165px; /* Perfect sizing gap to fit the search badge text */
+            padding: 0 16px 0 165px;
             font-size: 0.92rem;
             border: 1px solid #000000;
-            border-radius: 20px; /* Perfect Pill Shape */
+            border-radius: 20px;
             font-family: 'Inter', sans-serif;
             outline: none;
             box-sizing: border-box;
@@ -115,12 +108,10 @@ const formatDate = (dateStr) => {
             white-space: nowrap;
         }
         .search-badge .star-icon {
-            color: #4f46e5; /* Precise purple sparkle color */
+            color: #4f46e5;
             font-size: 1.2rem;
             line-height: 1;
         }
-
-        /* 3. Auth Buttons Layout Group */
         .auth-actions {
             display: flex;
             align-items: center;
@@ -142,8 +133,6 @@ const formatDate = (dateStr) => {
             border-radius: 4px;
             text-decoration: none;
         }
-
-        /* 4. Navigation Menu Bar Styles */
         .nav-menu {
             display: flex;
             justify-content: space-between;
@@ -155,18 +144,14 @@ const formatDate = (dateStr) => {
         .nav-menu::-webkit-scrollbar { display: none; }
         .nav-link {
             font-size: 0.95rem;
-            font-weight: 700; /* Crisp bold look */
+            font-weight: 700;
             color: #000000;
             text-decoration: none;
             white-space: nowrap;
         }
-        .nav-link:hover {
-            color: #0066cc;
-        }
-
-        /* 5. Disclaimer Panel Section Layout */
+        .nav-link:hover { color: #0066cc; }
         .disclaimer-section {
-            background-color: #f9f9f9; /* Subtle off-white row wrap layout */
+            background-color: #f9f9f9;
             padding: 14px 0;
             text-align: center;
         }
@@ -181,16 +166,12 @@ const formatDate = (dateStr) => {
             text-decoration: underline;
             cursor: pointer;
         }
-
-        /* 6. Sharp Global Dividing Line Row */
         .header-bottom-line {
             border: none;
-            border-top: 1.5px solid #000000; /* Strong crisp baseline splitter component */
+            border-top: 1.5px solid #000000;
             margin: 16px 0 40px 0;
             padding: 0;
         }
-
-        /* Feed Cards Styles */
         h1.section-title { 
             font-family: 'Playfair Display', serif; 
             font-size: 2.5rem; 
@@ -237,7 +218,6 @@ const formatDate = (dateStr) => {
 </head>
 <body>
 
-    <!-- Precise Wirecutter Global Header Layout -->
     <header class="site-header">
         <a href="/" class="logo-container">
             <span class="logo-t">T</span>
@@ -245,7 +225,6 @@ const formatDate = (dateStr) => {
             <span class="logo-text">Wirecutter</span>
         </a>
         
-        <!-- Pill Shaped Active Search Input Field -->
         <div class="search-container">
             <div class="search-badge">
                 <span class="star-icon">✦</span> Ask Wirecutter Finder
@@ -265,7 +244,6 @@ const formatDate = (dateStr) => {
         </div>
     </header>
 
-    <!-- Navigation Menu Row -->
     <nav class="nav-menu">
         <a href="/" class="nav-link">Prime Day</a>
         <a href="#" class="nav-link">Home & Garden</a>
@@ -278,21 +256,20 @@ const formatDate = (dateStr) => {
         <a href="#" class="nav-link">Wirecutter Store</a>
     </nav>
 
-    <!-- Disclaimer Info Bar component -->
     <div class="disclaimer-section">
         <p class="disclaimer-text">
             We independently review everything we recommend. When you buy through our links, we may earn a commission. <strong>Learn more ›</strong>
         </p>
     </div>
 
-    <!-- The exact solid line element separator from image_30a7c4.png -->
     <hr class="header-bottom-line" />
 
-    <!-- Main Content Review Feed Engine layout -->
     <h1 class="section-title">All Reviews</h1>
 
     <main class="articles-list">
         {Array.isArray(posts) && posts.map((post) => {
+            if (!post) return null;
+
             let brandSlug = '';
             let modelSlug = '';
             
@@ -300,24 +277,28 @@ const formatDate = (dateStr) => {
             embeddedTerms.forEach((taxonomyGroup) => {
               if (Array.isArray(taxonomyGroup)) {
                 taxonomyGroup.forEach((term) => {
-                  if (term.taxonomy === 'brands') brandSlug = term.slug;
-                  if (term.taxonomy === 'models') modelSlug = term.slug;
+                  if (term && term.taxonomy === 'brands') brandSlug = term.slug || '';
+                  if (term && term.taxonomy === 'models') modelSlug = term.slug || '';
                 });
               }
             });
 
             const hrefPath = brandSlug 
-                ? `/${brandSlug}/${modelSlug ? modelSlug : 'all'}/${post.slug}` 
-                : `/${post.slug}`;
+                ? `/${brandSlug}/${modelSlug ? modelSlug : 'all'}/${post.slug || ''}` 
+                : `/${post.slug || ''}`;
 
             const featuredImage = post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
-            const searchHaystack = `${post.title?.rendered} ${post.content?.rendered || ''} ${brandSlug} ${modelSlug}`.toLowerCase();
+            
+            // Safe plain text compilation for searching strings without crashing on empty values
+            const rawBodyText = post.content?.rendered ? post.content.rendered.replace(/<\/?[^>]+(>|$)/g, "") : "";
+            const rawExcerptText = post.excerpt?.rendered ? post.excerpt.rendered.replace(/<\/?[^>]+(>|$)/g, "") : "";
+            const searchHaystack = `${post.title?.rendered || ''} ${rawBodyText} ${brandSlug} ${modelSlug}`.toLowerCase();
 
             return (
                 <article class="article-card" data-search-content={searchHaystack}>
                     <div class="thumbnail-wrapper">
                         {featuredImage ? (
-                            <img src={featuredImage} alt={post.title?.rendered} loading="lazy" />
+                            <img src={featuredImage} alt={post.title?.rendered || 'Article Image'} loading="lazy" />
                         ) : (
                             <div style="width:100%; height:100%; background:#eaeaea; display:flex; align-items:center; justify-content:center; color:#999; font-size:0.9rem;">No Image</div>
                         )}
@@ -325,18 +306,16 @@ const formatDate = (dateStr) => {
 
                     <div class="content-block">
                         <h2 class="article-title">
-                            <a href={hrefPath} set:html={post.title?.rendered} />
+                            <a href={hrefPath} set:html={post.title?.rendered || 'Untitled Article'} />
                         </h2>
                         
-                        <!-- Smart Dynamic Content Excerpt Extractor -->
                         <div class="excerpt">
-                          {post.excerpt?.rendered && post.excerpt.rendered.trim() !== "" ? (
+                          {rawExcerptText && rawExcerptText.trim() !== "" ? (
                             <span set:html={post.excerpt.rendered} />
                           ) : (
-                            /* Strips HTML tags from the full content body and cuts it cleanly at 160 characters */
                             <span>
-                              {post.content?.rendered 
-                                ? post.content.rendered.replace(/<\/?[^>]+(>|$)/g, "").substring(0, 160) + "..."
+                              {rawBodyText && rawBodyText.trim() !== "" 
+                                ? rawBodyText.substring(0, 160) + "..."
                                 : "Read our deep breakdown and troubleshooting diagnosis steps for this bike entry."}
                             </span>
                           )}
@@ -349,17 +328,18 @@ const formatDate = (dateStr) => {
         })}
     </main>
 
-    <!-- Fast Client-Side Instant Content Filtering Script -->
     <script>
         const searchInput = document.getElementById('directorySearch');
         const cards = document.querySelectorAll('.article-card');
 
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
-                const query = e.target.value.toLowerCase().trim();
+                const target = e.target as HTMLInputElement;
+                const query = target.value.toLowerCase().trim();
                 cards.forEach(card => {
-                    const content = card.getAttribute('data-search-content') || '';
-                    card.style.display = content.includes(query) ? 'flex' : 'none';
+                    const htmlCard = card as HTMLElement;
+                    const content = htmlCard.getAttribute('data-search-content') || '';
+                    htmlCard.style.display = content.includes(query) ? 'flex' : 'none';
                 });
             });
         }
