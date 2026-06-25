@@ -1,42 +1,20 @@
 ---
 export async function getStaticPaths() {
-  try {
-    const res = await fetch('https://bikefixdb.biz.id/wp-json/wp/v2/posts'); // Or /wp/v2/symptoms depending on your custom post type
-    const posts = await res.json();
-    
-    if (Array.isArray(posts) && posts.length > 0) {
-      return posts.map((post) => ({
-        params: { slug: post.slug },
-        props: { post },
-      }));
-    }
-  } catch (e) {
-    console.log("Local WordPress API offline during GitHub build. Using static path fallbacks.");
-  }
-
-  // Guaranteed fallback paths so your site never builds broken 404 pages
-  return [
-    {
-      params: { slug: 'president-indonesia' },
-      props: { 
-        post: { 
-          title: { rendered: 'President Indonesia 66' }, 
-          content: { rendered: '<p>Testing dynamic automated deployment system sync payload.</p>' } 
-        } 
-      }
-    },
-    {
-      params: { slug: 'trek-marlin-brake-squeal-causes-fixes-owner-reported' },
-      props: { 
-        post: { 
-          title: { rendered: 'Trek Marlin Brake Squeal: Causes, Fixes (Owner-Reported)' }, 
-          content: { rendered: '<p>Brake troubleshooting content goes here.</p>' } 
-        } 
-      }
-    }
-  ];
+  // Pulls the live link URL you set inside your deploy.yml environment variables
+  const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://bikefixdb.biz.id/wp-json';
+  
+  // Fetching the dynamic data from your live link endpoint
+  const res = await fetch(`${apiUrl}/wp/v2/posts?per_page=100`);
+  const posts = await res.json();
+  
+  // This maps every single live post dynamically into its own URL route page
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
 }
 
+// Destructure the individual post properties passed down from getStaticPaths
 const { post } = Astro.props;
 ---
 
@@ -68,6 +46,8 @@ const { post } = Astro.props;
 <body>
     <a href="/">← Back to Home</a>
     <h1>{post.title.rendered}</h1>
+    
+    <!-- This renders the actual raw HTML content field directly from your WordPress database -->
     <div class="content" set:html={post.content.rendered} />
 </body>
 </html>
