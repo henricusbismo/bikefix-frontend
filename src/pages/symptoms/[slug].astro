@@ -1,11 +1,10 @@
 ---
 export async function getStaticPaths() {
-  // Pulls the endpoint URL from your deploy.yml or falls back to the query string layout
   const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://bikefixdb.biz.id/?rest_route=';
   
   try {
-    // Appending /wp/v2/posts onto our query string API base route cleanly
-    const res = await fetch(`${apiUrl}/wp/v2/posts&per_page=100`);
+    // TARGETING THE CUSTOM POST TYPE ENDPOINT '/wp/v2/symptoms'
+    const res = await fetch(`${apiUrl}/wp/v2/symptoms&per_page=100`);
     
     const contentType = res.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
@@ -21,7 +20,7 @@ export async function getStaticPaths() {
       }));
     }
   } catch (error) {
-    console.error("Failed to fetch posts at build time:", error);
+    console.error("Failed to fetch custom post type entries at build time:", error);
   }
 
   return [];
