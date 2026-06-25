@@ -1,5 +1,9 @@
-// @ts-check
 import { defineConfig } from 'astro/config';
 
-// https://astro.build/config
-export default defineConfig({});
+export default defineConfig({
+  // ... your existing integrations like tailwind or sitemap
+  trailingSlash: 'always',
+  build: {
+    format: 'directory' // Forces Astro to build /symptoms/president-indonesia/index.html
+  }
+});
