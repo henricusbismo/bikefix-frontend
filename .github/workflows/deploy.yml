@@ -31,5 +31,6 @@ jobs:
         with:
           source: "dist"
           storageZoneName: "bikefixdb"
+          storageEndpoint: "ny.storage.bunnycdn.com"
           storagePassword: ${{ secrets.BUNNY_STORAGE_PASSWORD }}
           upload: "true"
