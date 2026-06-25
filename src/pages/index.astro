@@ -127,9 +127,9 @@ const formatDate = (dateStr) => {
         
         <div class="search-container">
             <div class="search-badge">
-                <span class="star-icon">✦</span> Ask Bikefix Database
+                <span class="star-icon">✦</span>Ask
             </div>
-            <input type="text" id="directorySearch" class="search-input" placeholder="I broke my chain" autocomplete="off" />
+            <input type="text" id="directorySearch" class="search-input" placeholder="  I broke my chain" autocomplete="off" />
         </div>
 
         <div class="auth-actions">
@@ -186,13 +186,20 @@ const formatDate = (dateStr) => {
             const hrefPath = brandSlug ? `/${brandSlug}/${modelSlug ? modelSlug : 'all'}/${post.slug || ''}` : `/${post.slug || ''}`;
             const featuredImage = post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
             
-            // Clean HTML formatting tags and decode native WordPress typography entities safely
-            const rawBodyText = post.content?.rendered 
-                ? post.content.rendered.replace(/<\/?[^>]+(>|$)/g, "").replace(/&#8217;/g, "'").replace(/&#8220;/g, '"').replace(/&#8221;/g, '"') 
-                : "";
-            const rawExcerptText = post.excerpt?.rendered 
-                ? post.excerpt.rendered.replace(/<\/?[^>]+(>|$)/g, "").replace(/&#8217;/g, "'").replace(/&#8220;/g, '"').replace(/&#8221;/g, '"') 
-                : "";
+            // Advanced text scrubber to drop hidden style/script engines completely out of strings
+            const cleanText = (htmlString) => {
+                if (!htmlString) return "";
+                return htmlString
+                    .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "")  
+                    .replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, "") 
+                    .replace(/<\/?[^>]+(>|$)/g, "")                     
+                    .replace(/&#8217;/g, "'")
+                    .replace(/&#8220;/g, '"')
+                    .replace(/&#8221;/g, '"');
+            };
+
+            const rawBodyText = cleanText(post.content?.rendered);
+            const rawExcerptText = cleanText(post.excerpt?.rendered);
                 
             const searchHaystack = `${post.title?.rendered || ''} ${rawBodyText} ${brandSlug} ${modelSlug}`.toLowerCase();
 
