@@ -34,9 +34,9 @@ jobs:
         with:
           source: "dist"
           storageZoneName: "bikefixdb"
-          storageZoneRegion: "ny" # <-- Routes explicitly to ny.storage.bunnycdn.com
+          storageEndpoint: "ny.storage.bunnycdn.com" # <-- Correctly forces the New York endpoint
           storagePassword: ${{ secrets.BUNNY_STORAGE_PASSWORD }}
-          accessKey: ${{ secrets.BUNNY_STORAGE_PASSWORD }}
+          accessKey: ${{ secrets.BUNNY_ACCOUNT_API_KEY }} # <-- Swapped back to the account API Key
           pullZoneId: ${{ secrets.BUNNY_PULL_ZONE_ID }}
           upload: "true"
           remove: "true"
