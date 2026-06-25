@@ -1,20 +1,32 @@
 ---
 export async function getStaticPaths() {
-  // Pulls the live link URL you set inside your deploy.yml environment variables
-  const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://bikefixdb.biz.id/wp-json';
+  // Pulls the endpoint URL from your deploy.yml or falls back to the query string layout
+  const apiUrl = import.meta.env.WORDPRESS_API_URL || 'https://bikefixdb.biz.id/?rest_route=';
   
-  // Fetching the dynamic data from your live link endpoint
-  const res = await fetch(`${apiUrl}/wp/v2/posts?per_page=100`);
-  const posts = await res.json();
-  
-  // This maps every single live post dynamically into its own URL route page
-  return posts.map((post) => ({
-    params: { slug: post.slug },
-    props: { post },
-  }));
+  try {
+    // Appending /wp/v2/posts onto our query string API base route cleanly
+    const res = await fetch(`${apiUrl}/wp/v2/posts&per_page=100`);
+    
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      console.error(`API Error: Expected JSON but received content-type: ${contentType}`);
+      return [];
+    }
+
+    const posts = await res.json();
+    if (Array.isArray(posts)) {
+      return posts.map((post) => ({
+        params: { slug: post.slug },
+        props: { post },
+      }));
+    }
+  } catch (error) {
+    console.error("Failed to fetch posts at build time:", error);
+  }
+
+  return [];
 }
 
-// Destructure the individual post properties passed down from getStaticPaths
 const { post } = Astro.props;
 ---
 
@@ -23,7 +35,7 @@ const { post } = Astro.props;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{post.title.rendered}</title>
+    <title>{post?.title?.rendered || 'Loading...'}</title>
     <style>
         body {
             font-family: system-ui, sans-serif;
@@ -44,10 +56,13 @@ const { post } = Astro.props;
     </style>
 </head>
 <body>
-    <a href="/">← Back to Home</a>
-    <h1>{post.title.rendered}</h1>
-    
-    <!-- This renders the actual raw HTML content field directly from your WordPress database -->
-    <div class="content" set:html={post.content.rendered} />
+    {post ? (
+      <a href="/">← Back to Home</a>
+      <h1>{post.title.rendered}</h1>
+      <div class="content" set:html={post.content.rendered} />
+    ) : (
+      <h1>Post compilation error</h1>
+      <p>Check GitHub log streams for API payload diagnostics.</p>
+    )}
 </body>
 </html>

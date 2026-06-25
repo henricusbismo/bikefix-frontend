@@ -27,16 +27,16 @@ jobs:
       - name: Build Static Astro Site
         run: npm run build
         env:
-          WORDPRESS_API_URL: "https://bikefixdb.biz.id/wp-json"
+          WORDPRESS_API_URL: "https://bikefixdb.biz.id/?rest_route="
 
       - name: Deploy Production Files to Bunny Storage
         uses: ayeressian/bunnycdn-storage-deploy@v2.4.5
         with:
           source: "dist"
           storageZoneName: "bikefixdb"
-          storageEndpoint: "ny.storage.bunnycdn.com" # <-- Correctly forces the New York endpoint
+          storageEndpoint: "ny.storage.bunnycdn.com"
           storagePassword: ${{ secrets.BUNNY_STORAGE_PASSWORD }}
-          accessKey: ${{ secrets.BUNNY_ACCOUNT_API_KEY }} # <-- Swapped back to the account API Key
+          accessKey: ${{ secrets.BUNNY_ACCOUNT_API_KEY }}
           pullZoneId: ${{ secrets.BUNNY_PULL_ZONE_ID }}
           upload: "true"
           remove: "true"
