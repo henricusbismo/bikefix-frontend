@@ -248,9 +248,11 @@ const featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
                 <h1 class="article-header-title" set:html={post.title?.rendered} />
                 <div class="article-meta-row">{formatDate(post.date)}</div>
                 
-                {featuredImage && (
-                    <img src={featuredImage} alt={post.title?.rendered || 'Review Image'} class="article-featured-media" />
-                )}
+                // Automatically injects basic auth credentials into local media paths to bypass the login prompt
+let featuredImage = post?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
+if (featuredImage && featuredImage.includes('macho-newsletter.localsite.io')) {
+  featuredImage = featuredImage.replace('https://', 'https://journey:robust@');
+}
                 
                 <div class="article-body-content" set:html={post.content?.rendered} />
             </article>
