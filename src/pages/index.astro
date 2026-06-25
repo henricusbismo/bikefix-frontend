@@ -1,12 +1,16 @@
 ---
-const apiUrl = "https://journey:robust@macho-newsletter.localsite.io/wp-json/wp/v2";
+const apiUrl = "https://macho-newsletter.localsite.io/wp-json/wp/v2";
+const username = "journey";
+const password = "robust";
+const token = btoa(`${username}:${password}`);
 
 let symptoms = [];
 let errorMsg = null;
 
 try {
 	const response = await fetch(`${apiUrl}/symptoms?per_page=100`, {
-		signal: AbortSignal.timeout(5000)
+		headers: { 'Authorization': `Basic ${token}` },
+		signal: AbortSignal.timeout(8000)
 	});
 	
 	if (!response.ok) throw new Error(`WordPress returned status ${response.status}`);
@@ -14,13 +18,6 @@ try {
 	if (!Array.isArray(symptoms)) symptoms = [];
 } catch (error) {
 	errorMsg = error.message;
-	// Fallback mock data matching your current live links
-	symptoms = [
-		{ slug: "trek-marlin-brake-squealing", title: { rendered: "Trek Marlin Brake Squealing Fix" } },
-		{ slug: "squeaky-brakes", title: { rendered: "Squeaky Brakes Troubleshooting" } },
-		{ slug: "slipping-chain", title: { rendered: "Bicycle Chain Slipping Guide" } },
-		{ slug: "loose-handlebars", title: { rendered: "How to Fix Loose Handlebars" } }
-	];
 }
 ---
 
@@ -57,10 +54,9 @@ try {
 			.notice { 
 				background: #fff3cd; 
 				color: #856404; 
-				padding: 10px; 
+				padding: 15px; 
 				border-radius: 4px; 
 				margin-bottom: 20px; 
-				font-size: 0.9rem;
 			}
 		</style>
 	</head>
@@ -73,8 +69,12 @@ try {
 		<main>
 			{errorMsg && (
 				<div class="notice">
-					<strong>Runner Note:</strong> WordPress database is offline. Showing fallback directory guides.
+					<strong>Sync Status:</strong> Unable to connect to your live LocalWP instance. Error: {errorMsg}. Ensure your laptop is awake and Live Links is active.
 				</div>
+			)}
+
+			{symptoms.length === 0 && !errorMsg && (
+				<p>No symptoms found. Add some inside your custom post type dashboard!</p>
 			)}
 
 			<ul class="symptom-list">

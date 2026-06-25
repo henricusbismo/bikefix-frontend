@@ -1,6 +1,7 @@
 ---
 export async function getStaticPaths() {
-	const apiUrl = import.meta.env.WORDPRESS_API_URL;
+	// Fallback to the live link domain if variable isn't configured in github secrets environment yet
+	const apiUrl = import.meta.env.WORDPRESS_API_URL || "https://macho-newsletter.localsite.io/wp-json/wp/v2";
 	const username = 'journey';
 	const password = 'robust';
 	const token = btoa(`${username}:${password}`);
@@ -8,7 +9,7 @@ export async function getStaticPaths() {
 	try {
 		const response = await fetch(`${apiUrl}/symptoms?per_page=100`, {
 			headers: { 'Authorization': `Basic ${token}` },
-			signal: AbortSignal.timeout(5000)
+			signal: AbortSignal.timeout(8000)
 		});
 		
 		if (!response.ok) throw new Error(`WordPress returned status ${response.status}`);
@@ -20,39 +21,17 @@ export async function getStaticPaths() {
 			props: { post },
 		}));
 	} catch (error) {
-		console.warn("Skipping dynamic path generation on offline build container:", error.message);
-		return [
-			{ params: { slug: "trek-marlin-brake-squealing" } },
-			{ params: { slug: "squeaky-brakes" } },
-			{ params: { slug: "slipping-chain" } },
-			{ params: { slug: "loose-handlebars" } }
-		];
+		console.error("Static path generation failed. Cloud runner cannot access local instance:", error.message);
+		return []; // Return empty array to stop old mock items from leaking into structure
 	}
 }
 
 const { post } = Astro.props;
-const rawTitle = post?.title?.rendered || "Trek Marlin Brake Squealing Fix";
+if (!post) return Astro.redirect('/404'); // Handle invalid route compilations smoothly
 
-// This text displays when GitHub builds without a live connection to your laptop's database
-const defaultContent = `
-	<p>If your Trek Marlin disc brakes are squealing loudly, it is typically caused by contaminated pads, a glazed friction surface, or misaligned brake calipers.</p>
-	
-	<div style="background: #f0f7ff; padding: 15px; border-left: 4px solid #0066cc; margin: 20px 0; border-radius: 4px;">
-		<strong>Common Causes:</strong> Touching the brake rotors with oily fingers, chain lube overspray, or mud accumulation on wet trail rides.
-	</div>
-
-	<h3>Step-by-Step Troubleshooting Guide</h3>
-	<ol style="line-height: 1.6; padding-left: 20px;">
-		<li style="margin-bottom: 10px;"><strong>Decontaminate the Rotor:</strong> Spray the metal brake rotor heavily with 91% or higher Isopropyl Alcohol. Wipe it down completely clean using a fresh, lint-free shop towel. Do not use regular cloths that might have detergent oils on them.</li>
-		<li style="margin-bottom: 10px;"><strong>Deglaze the Brake Pads:</strong> Safely remove your brake pads from the caliper. Take a sheet of 120-grit sandpaper, place it flat on a table, and gently rub the pads in a circular motion until the shiny, glazed top layer is worn away, exposing fresh friction material.</li>
-		<li style="margin-bottom: 10px;"><strong>Realign the Hydraulic Caliper:</strong> Put the pads back in. Loosen the two main bolts holding your brake caliper to the bike frame just enough so the caliper can wiggle. Squeeze and hold the handlebar brake lever down firmly—this forces the caliper to center itself over the rotor. While continuing to squeeze the lever tightly, torque both caliper bolts back down evenly.</li>
-	</ol>
-
-	<p style="margin-top: 20px; color: #555;"><em>Tip: Go out to a safe street and perform 10-15 hard stops from a moderate speed to properly "bed-in" the freshly sanded pads into the rotor surface.</em></p>
-`;
-
-const rawContent = post?.content?.rendered || defaultContent;
-const formattedDate = post?.date ? new Date(post.date).toLocaleDateString() : "June 25, 2026";
+const rawTitle = post.title.rendered;
+const rawContent = post.content.rendered;
+const formattedDate = new Date(post.date).toLocaleDateString();
 ---
 
 <html lang="en">
@@ -67,18 +46,12 @@ const formattedDate = post?.date ? new Date(post.date).toLocaleDateString() : "J
 				margin: 40px auto; 
 				padding: 20px; 
 				color: #222;
-				background-color: #ffffff;
-				line-height: 1.5;
+				line-height: 1.6;
 			}
 			a { color: #0066cc; text-decoration: none; }
 			a:hover { text-decoration: underline; }
 			.meta { color: #666; margin-bottom: 20px; font-size: 0.9rem; }
-			main * {
-				visibility: visible !important;
-				opacity: 1 !important;
-			}
 			h1 { font-size: 2.2rem; color: #111; margin-bottom: 5px; }
-			h3 { font-size: 1.4rem; color: #333; margin-top: 30px; }
 		</style>
 	</head>
 	<body>
