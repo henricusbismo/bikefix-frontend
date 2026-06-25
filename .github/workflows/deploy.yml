@@ -29,11 +29,10 @@ jobs:
         env:
           WORDPRESS_API_URL: "https://bikefixdb.biz.id/wp-json"
 
-      - name: Deploy Production Files to bunny.net Storage
-        uses: amandis/bunny-cdn-deploy-action@v1.1.2
-        with:
-          source: './dist'
-          storageZoneName: 'bikefix'
-          storageZonePassword: ${{ secrets.BUNNY_STORAGE_PASSWORD }}
-          pullZoneId: ${{ secrets.BUNNY_PULL_ZONE_ID }}
-          clearZoneCache: true
+      - name: BunnyCDN Deploy
+        uses: dustuu/Dustuu.Actions.BunnyCdnDeploy@0.1.5
+        env:
+          BUNNY_STORAGE_API_KEY: ${{ secrets.BUNNY_STORAGE_PASSWORD }}
+          BUNNY_STORAGE_ZONE: 'bikefix'
+          BUNNY_PULL_ZONE_ID: ${{ secrets.BUNNY_PULL_ZONE_ID }}
+          UPLOAD_DIR: './dist'
